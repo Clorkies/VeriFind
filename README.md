@@ -1,9 +1,9 @@
 <div align="center">
-  <img src="https://placehold.co/120x120/0f172a/e2e8f0?text=OF" alt="OnlyFounds logo placeholder" />
+  <img src="https://placehold.co/120x120/0f172a/e2e8f0?text=VF" alt="VeriFind logo placeholder" />
 </div>
 
-<h1 align="center">OnlyFounds</h1>
-<p align="center"><strong>The Immutable Campus Registry</strong></p>
+<h1 align="center">VeriFind</h1>
+<p align="center"><strong>Is your item VeriLost? VeriFind it now!</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Cardano-0033ad?style=for-the-badge&logo=cardano&logoColor=white" alt="Cardano" />
@@ -26,7 +26,7 @@
 
 ## Overview
 
-OnlyFounds works like a decentralized bulletin board:
+VeriFind works like a decentralized bulletin board:
 - A **Found report** is recorded as a blockchain transaction.
 - A **Claim action** is recorded through a wallet signature.
 - Status updates are tracked as follow-up on-chain references.
