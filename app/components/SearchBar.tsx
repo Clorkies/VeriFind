@@ -1,37 +1,55 @@
 "use client";
 
+import { useState } from "react";
+
 type SearchBarProps = {
   value: string;
   onChange: (value: string) => void;
 };
 
 export function SearchBar({ value, onChange }: SearchBarProps) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <label className="relative block w-full max-w-3xl">
       <span className="sr-only">Search the Ledger</span>
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle">
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-      </span>
-      <input
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search the Ledger"
-        className="w-full rounded-xl border border-refraction bg-glass-700/50 py-2.5 pl-10 pr-4 text-sm text-text-primary placeholder:text-text-subtle/70 outline-none ring-maroon/30 transition focus:border-maroon/50 focus:ring-2"
-      />
+
+      <div
+        className={`relative flex items-center gap-2 rounded-2xl border bg-[color-mix(in_srgb,var(--color-surface)_86%,transparent)] transition-all duration-300 ${
+          focused
+            ? "border-[var(--color-accent)] shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-accent)_20%,transparent)]"
+            : "border-[var(--color-border)]"
+        }`}
+      >
+        <span className="pl-4 text-[var(--color-text-soft)]">
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.6}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </span>
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Search the Ledger — by name, location, or txid…"
+          className="w-full bg-transparent py-3.5 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-soft)] outline-none sm:text-base"
+        />
+        <kbd className="mr-3 hidden rounded-md border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-text-soft)] sm:inline-block">
+          ⌘ K
+        </kbd>
+      </div>
     </label>
   );
 }

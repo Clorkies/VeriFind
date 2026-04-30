@@ -10,6 +10,11 @@
 !.yarn/releases
 !.yarn/versions
 
+/references
+references
+references/
+references/**
+
 # testing
 /coverage
 

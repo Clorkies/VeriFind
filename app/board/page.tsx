@@ -12,7 +12,7 @@ export default async function BoardPage({
   const showSkeleton = sp.loading === "1";
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-void-900 via-void-900 to-void-800">
+    <div className="relative min-h-screen">
       <NavBar />
       <BoardContent items={MOCK_ITEMS} showSkeleton={showSkeleton} />
       <GuestBanner />
