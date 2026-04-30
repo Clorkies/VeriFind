@@ -1,6 +1,35 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 export function HeroScene() {
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = cardRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const dx = (e.clientX - centerX) / (window.innerWidth / 2);
+      const dy = (e.clientY - centerY) / (window.innerHeight / 2);
+
+      const clampedX = Math.max(-1, Math.min(1, dx));
+      const clampedY = Math.max(-1, Math.min(1, dy));
+
+      setTilt({
+        x: -clampedY * 18,
+        y: clampedX * 18,
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
     <div className="relative w-full max-w-[540px]">
       <div
@@ -11,7 +40,14 @@ export function HeroScene() {
         className="absolute -bottom-8 right-0 h-32 w-32 rounded-full blur-[75px]"
         style={{ background: "var(--color-accent-glow)" }}
       />
-      <div className="surface-card lift relative overflow-hidden rounded-3xl p-6 sm:p-7">
+      <div
+        ref={cardRef}
+        className="surface-card lift relative overflow-hidden rounded-3xl p-6 transition-transform duration-200 ease-out sm:p-7"
+        style={{
+          transform: `perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transformStyle: "preserve-3d",
+        }}
+      >
         <div className="mb-5 flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-soft)]">
