@@ -46,9 +46,6 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           placeholder="Search the Ledger — by name, location, or txid…"
           className="w-full bg-transparent py-3.5 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-soft)] outline-none sm:text-base"
         />
-        <kbd className="mr-3 hidden rounded-md border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-text-soft)] sm:inline-block">
-          ⌘ K
-        </kbd>
       </div>
     </label>
   );

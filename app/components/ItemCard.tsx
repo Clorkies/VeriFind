@@ -67,18 +67,31 @@ type ItemCardProps = {
 };
 
 const EXPLORER_TX = "https://preprod.cardanoscan.io/transaction/";
+const MEDIA_ASPECTS = [
+  "aspect-[4/3]",
+  "aspect-[3/2]",
+  "aspect-[1/1]",
+  "aspect-[5/4]",
+  "aspect-[3/4]",
+] as const;
+
+function pickMediaAspect(seed: string) {
+  const hash = [...seed].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return MEDIA_ASPECTS[hash % MEDIA_ASPECTS.length];
+}
 
 export function ItemCard({ item }: ItemCardProps) {
   const short = truncateTxId(item.txHash);
   const explorerUrl = `${EXPLORER_TX}${item.txHash}`;
   const ref = useReveal<HTMLElement>();
+  const mediaAspect = pickMediaAspect(item.id);
 
   return (
     <article
       ref={ref}
       className="group reveal lift surface-card relative overflow-hidden rounded-2xl transition-colors hover:border-[var(--color-accent)]"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
+      <div className={`relative w-full overflow-hidden ${mediaAspect}`}>
         {item.imageUrl ? (
           <Image
             src={item.imageUrl}
