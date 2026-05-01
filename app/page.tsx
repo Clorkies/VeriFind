@@ -1,5 +1,6 @@
 import { GuestBanner } from "./components/GuestBanner";
 import { Hero } from "./components/Hero";
+import { HowItWorks } from "./components/HowItWorks";
 import { NavBar } from "./components/NavBar";
 
 export default function Home() {
@@ -7,6 +8,7 @@ export default function Home() {
     <div className="relative min-h-screen">
       <NavBar />
       <Hero />
+      <HowItWorks />
       <GuestBanner />
     </div>
   );

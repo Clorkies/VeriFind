@@ -18,7 +18,10 @@ const HeroScene = dynamic(
 
 export function Hero() {
   return (
-    <section className="relative mx-auto flex max-w-7xl flex-col gap-10 px-4 pb-24 pt-12 sm:px-6 lg:flex-row lg:items-center lg:gap-16 lg:px-8 lg:pt-20">
+    <section
+      className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl flex-col justify-center gap-10 px-4 pb-16 pt-6 sm:px-6 sm:pb-20 sm:pt-8 lg:flex-row lg:items-center lg:gap-16 lg:px-8 lg:pb-28 lg:pt-12"
+      aria-labelledby="hero-heading"
+    >
       <div className="flex-1 space-y-7 lg:max-w-xl">
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)] px-3 py-1.5 text-xs font-medium tracking-wide text-[var(--color-text-soft)]">
           <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />
@@ -28,6 +31,7 @@ export function Hero() {
         </div>
 
         <h1
+          id="hero-heading"
           className="animate-fade-up text-5xl font-bold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl"
           style={{ animationDelay: "0.05s" }}
         >
@@ -60,7 +64,7 @@ export function Hero() {
           </Link>
 
           <Link
-            href="#how"
+            href="#how-it-works"
             className="btn-ghost inline-flex items-center gap-2 rounded-xl px-6 py-4 text-base font-medium transition hover:-translate-y-0.5"
           >
             How it works
