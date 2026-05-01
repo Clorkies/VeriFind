@@ -42,7 +42,7 @@ export function Hero() {
           style={{ animationDelay: "0.15s" }}
         >
           The immutable, decentralized lost &amp; found registry for the
-          CIT-U campus. Every entry is a verifiable receipt — no passwords,
+          CIT-U campus. Every entry is a verifiable receipt, no passwords,
           no gatekeepers, just{" "}
           <span className="font-semibold text-[var(--color-accent)]">on-chain proof</span>.
         </p>
