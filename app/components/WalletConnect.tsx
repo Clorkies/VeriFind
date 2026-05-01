@@ -1,7 +1,7 @@
 "use client";
 
 import { MeshCardanoBrowserWallet } from "@meshsdk/wallet";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function WalletConnect() {
   const [availableWallets, setAvailableWallets] = useState<string[]>([]);
@@ -9,6 +9,8 @@ export function WalletConnect() {
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const getInstalledWallets = async () => {
@@ -23,6 +25,26 @@ export function WalletConnect() {
     getInstalledWallets();
   }, []);
 
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const el = popoverRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setIsOpen(false);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+
+    if (!isOpen) return;
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isOpen]);
+
   const connectWallet = async () => {
     if (selectedWallet === "Disconnected") return;
 
@@ -31,6 +53,7 @@ export function WalletConnect() {
     try {
       await MeshCardanoBrowserWallet.enable(selectedWallet);
       setConnectedWallet(selectedWallet);
+      setIsOpen(false);
     } catch {
       setError("Wallet connection failed. Please approve the wallet prompt.");
     } finally {
@@ -53,35 +76,67 @@ export function WalletConnect() {
         <span>{badgeLabel}</span>
       </div>
 
-      <select
-        value={selectedWallet}
-        onChange={(e) => setSelectedWallet(e.target.value)}
-        className="hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] md:block"
-        aria-label="Select wallet"
-      >
-        <option value="Disconnected">Select wallet</option>
-        {availableWallets.map((walletName) => (
-          <option key={walletName} value={walletName}>
-            {walletName}
-          </option>
-        ))}
-      </select>
+      <div className="relative" ref={popoverRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          disabled={Boolean(connectedWallet)}
+          className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+        >
+          {connectedWallet ? "Wallet Connected" : "Connect Wallet"}
+        </button>
 
-      <button
-        type="button"
-        onClick={connectWallet}
-        disabled={
-          isConnecting ||
-          selectedWallet === "Disconnected" ||
-          availableWallets.length === 0 ||
-          Boolean(connectedWallet)
-        }
-        className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-      >
-        {connectedWallet ? "Wallet Connected" : isConnecting ? "Connecting..." : "Connect Wallet"}
-      </button>
+        {isOpen ? (
+          <div
+            role="dialog"
+            aria-label="Connect wallet"
+            className="absolute right-0 mt-2 w-[min(92vw,320px)] rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] p-3 shadow-lg backdrop-blur"
+          >
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-[var(--color-text-soft)]">
+                Select wallet
+              </label>
+              <select
+                value={selectedWallet}
+                onChange={(e) => setSelectedWallet(e.target.value)}
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
+              >
+                <option value="Disconnected">
+                  {availableWallets.length === 0 ? "No wallets detected" : "Select wallet"}
+                </option>
+                {availableWallets.map((walletName) => (
+                  <option key={walletName} value={walletName}>
+                    {walletName}
+                  </option>
+                ))}
+              </select>
 
-      {error ? (
+              <button
+                type="button"
+                onClick={connectWallet}
+                disabled={
+                  isConnecting ||
+                  selectedWallet === "Disconnected" ||
+                  availableWallets.length === 0
+                }
+                className="btn-primary w-full rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isConnecting ? "Connecting..." : "Connect"}
+              </button>
+            </div>
+
+            {error ? (
+              <p className="mt-2 text-xs text-red-300" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {!isOpen && error ? (
         <span className="hidden text-xs text-red-300 lg:block" role="alert">
           {error}
         </span>
