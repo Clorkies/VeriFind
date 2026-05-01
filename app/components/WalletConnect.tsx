@@ -9,6 +9,7 @@ export function WalletConnect() {
   const [availableWallets, setAvailableWallets] = useState<string[]>([]);
   const [selectedWallet, setSelectedWallet] = useState("Disconnected");
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<MeshCardanoBrowserWallet | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +31,8 @@ export function WalletConnect() {
 
         setSelectedWallet(lastWallet);
         try {
-          await MeshCardanoBrowserWallet.enable(lastWallet);
+          const restoredWallet = await MeshCardanoBrowserWallet.enable(lastWallet);
+          setWallet(restoredWallet);
           setConnectedWallet(lastWallet);
         } catch {
           localStorage.removeItem(STORAGE_KEY);
@@ -69,7 +71,8 @@ export function WalletConnect() {
     setIsConnecting(true);
     setError(null);
     try {
-      await MeshCardanoBrowserWallet.enable(selectedWallet);
+      const connected = await MeshCardanoBrowserWallet.enable(selectedWallet);
+      setWallet(connected);
       setConnectedWallet(selectedWallet);
       localStorage.setItem(STORAGE_KEY, selectedWallet);
       setIsOpen(false);
@@ -79,6 +82,55 @@ export function WalletConnect() {
       setIsConnecting(false);
     }
   };
+
+  useEffect(() => {
+    const w = window as Window & {
+      verifindWalletDebug?: {
+        getStatus: () => {
+          connected: boolean;
+          selectedWallet: string;
+          connectedWallet: string | null;
+        };
+        getNetworkId: () => Promise<number>;
+        getChangeAddress: () => Promise<string>;
+        getUsedAddresses: () => Promise<string[]>;
+        getBalance: () => Promise<string>;
+        getBalanceMesh: () => Promise<Awaited<ReturnType<MeshCardanoBrowserWallet["getBalanceMesh"]>>>;
+      };
+    };
+
+    w.verifindWalletDebug = {
+      getStatus: () => ({
+        connected: Boolean(wallet),
+        selectedWallet,
+        connectedWallet,
+      }),
+      getNetworkId: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getNetworkId();
+      },
+      getChangeAddress: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getChangeAddressBech32();
+      },
+      getUsedAddresses: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getUsedAddressesBech32();
+      },
+      getBalance: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getBalance();
+      },
+      getBalanceMesh: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getBalanceMesh();
+      },
+    };
+
+    return () => {
+      delete w.verifindWalletDebug;
+    };
+  }, [wallet, selectedWallet, connectedWallet]);
 
   const badgeLabel = connectedWallet ?? "Guest";
   const badgeInitial = connectedWallet ? connectedWallet[0].toUpperCase() : "G";
