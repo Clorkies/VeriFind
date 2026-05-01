@@ -3,6 +3,8 @@
 import { MeshCardanoBrowserWallet } from "@meshsdk/wallet";
 import { useEffect, useRef, useState } from "react";
 
+const STORAGE_KEY = "verifind.connectedWallet";
+
 export function WalletConnect() {
   const [availableWallets, setAvailableWallets] = useState<string[]>([]);
   const [selectedWallet, setSelectedWallet] = useState("Disconnected");
@@ -16,7 +18,23 @@ export function WalletConnect() {
     const getInstalledWallets = async () => {
       try {
         const wallets = await MeshCardanoBrowserWallet.getInstalledWallets();
-        setAvailableWallets(wallets.map((wallet) => wallet.name));
+        const names = wallets.map((wallet) => wallet.name);
+        setAvailableWallets(names);
+
+        const lastWallet = localStorage.getItem(STORAGE_KEY);
+        if (!lastWallet) return;
+        if (!names.includes(lastWallet)) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+
+        setSelectedWallet(lastWallet);
+        try {
+          await MeshCardanoBrowserWallet.enable(lastWallet);
+          setConnectedWallet(lastWallet);
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
+        }
       } catch {
         setError("Unable to detect browser wallets.");
       }
@@ -53,6 +71,7 @@ export function WalletConnect() {
     try {
       await MeshCardanoBrowserWallet.enable(selectedWallet);
       setConnectedWallet(selectedWallet);
+      localStorage.setItem(STORAGE_KEY, selectedWallet);
       setIsOpen(false);
     } catch {
       setError("Wallet connection failed. Please approve the wallet prompt.");
