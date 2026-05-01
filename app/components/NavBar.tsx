@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { WalletConnect } from "./WalletConnect";
 
 function ChainGlyph({ className }: { className?: string }) {
   return (
@@ -68,23 +69,7 @@ export function NavBar() {
           <NavLink href="/#how-it-works">How it works</NavLink>
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div
-            className="hidden items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_85%,transparent)] py-1 pl-1 pr-3 text-xs text-[var(--color-text-soft)] sm:flex"
-            title="Guest — no wallet connected"
-          >
-            <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[10px] font-semibold text-white">
-              G
-            </span>
-            <span>Guest</span>
-          </div>
-          <button
-            type="button"
-            className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
-          >
-            Connect Wallet
-          </button>
-        </div>
+        <WalletConnect />
       </div>
     </header>
   );
