@@ -52,7 +52,7 @@ export function BoardContent({ items, showSkeleton }: BoardContentProps) {
   }, [items, filter, query]);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 pb-32 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full flex-1 max-w-7xl px-4 py-10 pb-32 sm:px-6 lg:px-8">
       {/* Page header */}
       <header className="mb-10 space-y-4">
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_86%,transparent)] px-3 py-1.5">
