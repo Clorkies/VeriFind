@@ -332,6 +332,14 @@ const MOCK_ROWS: MockRow[] = [
     foundAt: "2026-04-26T16:19:00.000Z",
   },
   {
+    name: "Notebook (Grid, Blue Cover)",
+    category: "books",
+    location: "Found at: Stationery Shop / Basket",
+    status: "found",
+    picSeed: "vf-x32",
+    foundAt: "2026-04-26T16:19:00.000Z",
+  },
+  {
     name: "Notebook (Grid, Black Cover)",
     category: "books",
     location: "Found at: Stationery Shop / Basket",
