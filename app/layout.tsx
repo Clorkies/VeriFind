@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { EutxoWatermark } from "./components/EutxoWatermark";
+import { Analytics } from "@vercel/analytics/react";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
