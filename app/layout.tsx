@@ -20,7 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={interTight.className}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={interTight.className}
+    >
       <body>
         <EutxoWatermark />
         {children}

@@ -1,0 +1,217 @@
+"use client";
+
+import { MeshCardanoBrowserWallet } from "@meshsdk/wallet";
+import { useEffect, useRef, useState } from "react";
+
+const STORAGE_KEY = "verifind.connectedWallet";
+
+export function WalletConnect() {
+  const [availableWallets, setAvailableWallets] = useState<string[]>([]);
+  const [selectedWallet, setSelectedWallet] = useState("Disconnected");
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<MeshCardanoBrowserWallet | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const getInstalledWallets = async () => {
+      try {
+        const wallets = await MeshCardanoBrowserWallet.getInstalledWallets();
+        const names = wallets.map((wallet) => wallet.name);
+        setAvailableWallets(names);
+
+        const lastWallet = localStorage.getItem(STORAGE_KEY);
+        if (!lastWallet) return;
+        if (!names.includes(lastWallet)) {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+
+        setSelectedWallet(lastWallet);
+        try {
+          const restoredWallet = await MeshCardanoBrowserWallet.enable(lastWallet);
+          setWallet(restoredWallet);
+          setConnectedWallet(lastWallet);
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch {
+        setError("Unable to detect browser wallets.");
+      }
+    };
+
+    getInstalledWallets();
+  }, []);
+
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const el = popoverRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setIsOpen(false);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+
+    if (!isOpen) return;
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isOpen]);
+
+  const connectWallet = async () => {
+    if (selectedWallet === "Disconnected") return;
+
+    setIsConnecting(true);
+    setError(null);
+    try {
+      const connected = await MeshCardanoBrowserWallet.enable(selectedWallet);
+      setWallet(connected);
+      setConnectedWallet(selectedWallet);
+      localStorage.setItem(STORAGE_KEY, selectedWallet);
+      setIsOpen(false);
+    } catch {
+      setError("Wallet connection failed. Please approve the wallet prompt.");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  useEffect(() => {
+    const w = window as Window & {
+      verifindWalletDebug?: {
+        getStatus: () => {
+          connected: boolean;
+          selectedWallet: string;
+          connectedWallet: string | null;
+        };
+        getNetworkId: () => Promise<number>;
+        getChangeAddress: () => Promise<string>;
+        getUsedAddresses: () => Promise<string[]>;
+        getBalance: () => Promise<string>;
+        getBalanceMesh: () => Promise<Awaited<ReturnType<MeshCardanoBrowserWallet["getBalanceMesh"]>>>;
+      };
+    };
+
+    w.verifindWalletDebug = {
+      getStatus: () => ({
+        connected: Boolean(wallet),
+        selectedWallet,
+        connectedWallet,
+      }),
+      getNetworkId: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getNetworkId();
+      },
+      getChangeAddress: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getChangeAddressBech32();
+      },
+      getUsedAddresses: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getUsedAddressesBech32();
+      },
+      getBalance: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getBalance();
+      },
+      getBalanceMesh: async () => {
+        if (!wallet) throw new Error("Wallet not connected");
+        return wallet.getBalanceMesh();
+      },
+    };
+
+    return () => {
+      delete w.verifindWalletDebug;
+    };
+  }, [wallet, selectedWallet, connectedWallet]);
+
+  const badgeLabel = connectedWallet ?? "Guest";
+  const badgeInitial = connectedWallet ? connectedWallet[0].toUpperCase() : "G";
+
+  return (
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div
+        className="hidden items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_85%,transparent)] py-1 pl-1 pr-3 text-xs text-[var(--color-text-soft)] sm:flex"
+        title={connectedWallet ? `${connectedWallet} connected` : "Guest — no wallet connected"}
+      >
+        <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[10px] font-semibold text-white">
+          {badgeInitial}
+        </span>
+        <span>{badgeLabel}</span>
+      </div>
+
+      <div className="relative" ref={popoverRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          disabled={Boolean(connectedWallet)}
+          className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+        >
+          {connectedWallet ? "Wallet Connected" : "Connect Wallet"}
+        </button>
+
+        {isOpen ? (
+          <div
+            role="dialog"
+            aria-label="Connect wallet"
+            className="absolute right-0 mt-2 w-[min(92vw,320px)] rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] p-3 shadow-lg backdrop-blur"
+          >
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-[var(--color-text-soft)]">
+                Select wallet
+              </label>
+              <select
+                value={selectedWallet}
+                onChange={(e) => setSelectedWallet(e.target.value)}
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
+              >
+                <option value="Disconnected">
+                  {availableWallets.length === 0 ? "No wallets detected" : "Select wallet"}
+                </option>
+                {availableWallets.map((walletName) => (
+                  <option key={walletName} value={walletName}>
+                    {walletName}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={connectWallet}
+                disabled={
+                  isConnecting ||
+                  selectedWallet === "Disconnected" ||
+                  availableWallets.length === 0
+                }
+                className="btn-primary w-full rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isConnecting ? "Connecting..." : "Connect"}
+              </button>
+            </div>
+
+            {error ? (
+              <p className="mt-2 text-xs text-red-300" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {!isOpen && error ? (
+        <span className="hidden text-xs text-red-300 lg:block" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}

@@ -6,7 +6,7 @@ type MasonryGridProps = {
 
 export function MasonryGrid({ children }: MasonryGridProps) {
   return (
-    <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [&>*]:mb-5 [&>*]:break-inside-avoid">
+    <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 [&>*]:mb-6 [&>*]:break-inside-avoid">
       {children}
     </div>
   );

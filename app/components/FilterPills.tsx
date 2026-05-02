@@ -7,21 +7,13 @@ export type FilterId = "all" | ItemCategory | "resolved";
 const FILTERS: {
   id: FilterId;
   label: string;
-  dot: "green" | "blue";
 }[] = [
-  { id: "electronics", label: "Electronics", dot: "green" },
-  { id: "books", label: "Books", dot: "green" },
-  { id: "valuables", label: "Valuables", dot: "green" },
-  { id: "resolved", label: "Resolved Cases", dot: "blue" },
+  { id: "all", label: "All" },
+  { id: "electronics", label: "Electronics" },
+  { id: "books", label: "Books" },
+  { id: "valuables", label: "Valuables" },
+  { id: "resolved", label: "Resolved" },
 ];
-
-function Dot({ variant }: { variant: "green" | "blue" }) {
-  const cls =
-    variant === "green"
-      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
-      : "bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.45)]";
-  return <span className={`h-2 w-2 shrink-0 rounded-full ${cls}`} aria-hidden />;
-}
 
 type FilterPillsProps = {
   active: FilterId;
@@ -30,33 +22,25 @@ type FilterPillsProps = {
 
 export function FilterPills({ active, onChange }: FilterPillsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <button
-        type="button"
-        onClick={() => onChange("all")}
-        className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition sm:text-sm ${
-          active === "all"
-            ? "border-maroon/60 bg-maroon/20 text-text-primary"
-            : "border-refraction/80 bg-glass-700/30 text-text-subtle hover:border-refraction hover:text-text-primary"
-        }`}
-      >
-        All
-      </button>
-      {FILTERS.map((f) => (
-        <button
-          key={f.id}
-          type="button"
-          onClick={() => onChange(f.id)}
-          className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition sm:text-sm ${
-            active === f.id
-              ? "border-maroon/60 bg-maroon/20 text-text-primary"
-              : "border-refraction/80 bg-glass-700/30 text-text-subtle hover:border-refraction hover:text-text-primary"
-          }`}
-        >
-          <Dot variant={f.dot} />
-          {f.label}
-        </button>
-      ))}
+    <div className="scrollbar-hidden flex gap-2 overflow-x-auto pb-1">
+      {FILTERS.map((f) => {
+        const isActive = active === f.id;
+        return (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => onChange(f.id)}
+            className={`group relative flex shrink-0 items-center gap-2 overflow-hidden rounded-full border px-4 py-2 text-xs font-medium transition-all duration-300 sm:text-sm ${
+              isActive
+                ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+                : "border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_84%,transparent)] text-[var(--color-text-soft)] hover:-translate-y-0.5 hover:border-[var(--color-accent)] hover:text-[var(--color-text-primary)]"
+            }`}
+          >
+            <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-accent)]" />
+            <span className="relative">{f.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
