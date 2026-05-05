@@ -119,14 +119,26 @@ Open `http://localhost:3000`.
 
 ## Environment Variables
 
-Create `.env` and add required keys:
+Create `.env.local` at the repo root and add the required keys:
 
 ```bash
-BLOCKFROST_API_KEY=your_key_here
-NEXT_PUBLIC_NETWORK=preprod
+NEXT_PUBLIC_BLOCKFROST_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-Adjust variable names based on your final implementation.
+- Get a project ID from [blockfrost.io](https://blockfrost.io). Pick the network you want to develop against (Preprod is recommended for testing).
+- The project ID prefix (`preview` / `preprod` / `mainnet`) determines which network the SDK talks to. Your **connected wallet must be set to the same network**, otherwise transaction submission will fail.
+- This variable is exposed to the browser (note the `NEXT_PUBLIC_` prefix) because the demo builds and submits transactions client-side. For production, proxy provider calls through a server route and keep the key private.
+- Restart `bun dev` after editing `.env.local` so Next.js picks up the change.
+
+To fund a Preprod wallet for the demo, request test ADA from the [Cardano testnet faucet](https://docs.cardano.org/cardano-testnet/tools/faucet).
+
+### Try the simple-transaction demo
+
+1. Set `NEXT_PUBLIC_BLOCKFROST_PROJECT_ID` as above and run `bun dev`.
+2. Open `http://localhost:3000/board`.
+3. Connect a Cardano browser wallet (Eternl, Lace, Nami, etc.) on the matching network.
+4. Paste a recipient address and an amount in lovelace (e.g. `2000000` ≈ 2 ADA), then submit.
+5. The panel shows the resulting transaction hash and a Cardanoscan link.
 
 ## License
 
