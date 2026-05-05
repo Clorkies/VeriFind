@@ -83,6 +83,14 @@ export function WalletConnect() {
     }
   };
 
+  const disconnectWallet = () => {
+    setWallet(null);
+    setConnectedWallet(null);
+    setSelectedWallet("Disconnected");
+    localStorage.removeItem(STORAGE_KEY);
+    setError(null);
+  };
+
   useEffect(() => {
     const w = window as Window & {
       verifindWalletDebug?: {
@@ -151,8 +159,7 @@ export function WalletConnect() {
         <button
           type="button"
           onClick={() => setIsOpen((v) => !v)}
-          disabled={Boolean(connectedWallet)}
-          className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+          className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
           aria-haspopup="dialog"
           aria-expanded={isOpen}
         >
@@ -166,36 +173,63 @@ export function WalletConnect() {
             className="absolute right-0 mt-2 w-[min(92vw,320px)] rounded-xl border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] p-3 shadow-lg backdrop-blur"
           >
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-[var(--color-text-soft)]">
-                Select wallet
-              </label>
-              <select
-                value={selectedWallet}
-                onChange={(e) => setSelectedWallet(e.target.value)}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
-              >
-                <option value="Disconnected">
-                  {availableWallets.length === 0 ? "No wallets detected" : "Select wallet"}
-                </option>
-                {availableWallets.map((walletName) => (
-                  <option key={walletName} value={walletName}>
-                    {walletName}
-                  </option>
-                ))}
-              </select>
+              {connectedWallet ? (
+                <>
+                  <p className="text-xs font-medium text-[var(--color-text-soft)]">
+                    Connected: <span className="text-[var(--color-text-primary)]">{connectedWallet}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      disconnectWallet();
+                      setIsOpen(false);
+                    }}
+                    className="btn-primary w-full rounded-lg px-4 py-2 text-sm font-semibold"
+                  >
+                    Disconnect
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]"
+                  >
+                    Close
+                  </button>
+                </>
+              ) : (
+                <>
+                  <label className="block text-xs font-medium text-[var(--color-text-soft)]">
+                    Select wallet
+                  </label>
+                  <select
+                    value={selectedWallet}
+                    onChange={(e) => setSelectedWallet(e.target.value)}
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
+                  >
+                    <option value="Disconnected">
+                      {availableWallets.length === 0 ? "No wallets detected" : "Select wallet"}
+                    </option>
+                    {availableWallets.map((walletName) => (
+                      <option key={walletName} value={walletName}>
+                        {walletName}
+                      </option>
+                    ))}
+                  </select>
 
-              <button
-                type="button"
-                onClick={connectWallet}
-                disabled={
-                  isConnecting ||
-                  selectedWallet === "Disconnected" ||
-                  availableWallets.length === 0
-                }
-                className="btn-primary w-full rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isConnecting ? "Connecting..." : "Connect"}
-              </button>
+                  <button
+                    type="button"
+                    onClick={connectWallet}
+                    disabled={
+                      isConnecting ||
+                      selectedWallet === "Disconnected" ||
+                      availableWallets.length === 0
+                    }
+                    className="btn-primary w-full rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isConnecting ? "Connecting..." : "Connect"}
+                  </button>
+                </>
+              )}
             </div>
 
             {error ? (
