@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Item, ItemCategory, ItemStatus } from "@/lib/itemTypes";
 import { ItemCard } from "./ItemCard";
+import { parseOwnerQrPayload } from "@/lib/qrPayload";
 
 export function AdminItemForm() {
   const [name, setName] = useState("");
@@ -10,6 +11,7 @@ export function AdminItemForm() {
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState<ItemStatus>("found");
   const [imageInput, setImageInput] = useState("");
+  const [ownerAddress, setOwnerAddress] = useState("");
   const [foundAt, setFoundAt] = useState(new Date().toISOString().slice(0, 16));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -30,6 +32,7 @@ export function AdminItemForm() {
     imageUrl: getImageUrl(imageInput),
     txHash: "0000000000000000000000000000000000000000000000000000000000000000",
     foundAt: new Date(foundAt).toISOString(),
+    ownerAddress: parseOwnerQrPayload(ownerAddress) || undefined,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +49,7 @@ export function AdminItemForm() {
       location,
       status,
       imageUrl: getImageUrl(imageInput),
+      ownerAddress: parseOwnerQrPayload(ownerAddress),
       foundAt: new Date(foundAt).toISOString(),
     });
 
@@ -58,6 +62,7 @@ export function AdminItemForm() {
     setName("");
     setLocation("");
     setImageInput("");
+    setOwnerAddress("");
     setIsSubmitting(false);
   };
 
@@ -161,6 +166,23 @@ export function AdminItemForm() {
                 placeholder="e.g. 'backpack', 'iphone', 'blue wallet' or a direct image URL"
                 className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
               />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <label htmlFor="ownerAddress" className="text-sm font-medium text-[var(--color-text-primary)]">
+                Owner Address (from sticker)
+              </label>
+              <input
+                id="ownerAddress"
+                type="text"
+                value={ownerAddress}
+                onChange={(e) => setOwnerAddress(e.target.value)}
+                placeholder="Scan or paste the address from the VeriFind sticker"
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              />
+              <p className="text-[10px] text-[var(--color-text-soft)]">
+                If the item has a VeriFind QR sticker, scan it and paste the address here to enable instant ownership verification.
+              </p>
             </div>
           </div>
 

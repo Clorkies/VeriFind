@@ -11,4 +11,5 @@ export interface Item {
   imageUrl: string | null;
   txHash: string;
   foundAt: string;
+  ownerAddress?: string;
 }
