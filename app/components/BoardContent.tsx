@@ -71,8 +71,8 @@ export function BoardContent({ items, showSkeleton }: BoardContentProps) {
           className="animate-fade-up max-w-2xl text-sm text-[var(--color-text-soft)] sm:text-base"
           style={{ animationDelay: "0.15s" }}
         >
-          Every lost or found item, recorded, signed, and verifiable on-chain.
-          Tap any card to see the receipt.
+          Every lost or found item, recorded on-chain. Owners tag belongings with
+          a personal QR sticker—scan to verify, no signature required.
         </p>
       </header>
 

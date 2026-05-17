@@ -20,125 +20,100 @@
   A decentralized bulletin board for the CIT-U community to report and recover lost items with a transparent, tamper-resistant on-chain history.
 </p>
 
-<p align="center">
-  <em>Logo is currently a placeholder and will be replaced in a future update.</em>
-</p>
-
 ## Overview
 
 VeriFind works like a decentralized bulletin board:
-- A **Found report** is recorded as a blockchain transaction.
-- A **Claim action** is recorded through a wallet signature.
-- Status updates are tracked as follow-up on-chain references.
 
-This creates a verifiable history of an item from discovery to return.
+- A **Found report** is recorded as a blockchain transaction.
+- **Owners** print a personal QR sticker (`verifind:v1:<address>`) and attach it to their belongings.
+- To **claim** an item, the owner scans the sticker in the app; if the address matches their connected wallet, ownership is verified—no signature or vkey required from the finder.
 
 ## Use Cases
 
 - **Library Find:** A student finds keys in the study area and posts a report with immutable timestamp and location.
-- **Verified Recovery:** A founder can inspect claimant wallet activity to reduce suspicious or repeated false claims.
+- **Sticker verification:** The owner scans their QR tag in VeriFind; a match with the connected wallet proves ownership instantly.
 - **Department Auditing:** Departments can monitor currently held items without manual spreadsheets.
 
 ## Key Features
 
-1. **Wallet-Authenticated Reporting**  
-   Users connect wallets (e.g., Eternl, Flint, MetaMask) instead of username/password, creating accountable and cryptographic identity trails.
+1. **Wallet-Authenticated Identity**  
+   Users connect Cardano wallets (e.g., Eternl, Lace, Nami) instead of username/password.
 
-2. **On-Chain Metadata Logging**  
-   Item data (e.g., item type, color, location) is saved as transaction metadata, making records public, searchable, and tamper-resistant.
+2. **Owner QR Stickers**  
+   Each wallet gets a downloadable QR code encoding its public address. Print and paste on laptops, IDs, and valuables.
 
-3. **Proof-of-Ownership Signature**  
-   Claimers sign unique wallet messages, producing verifiable digital proof tied to the claim event.
+3. **Scan-to-Verify Ownership**  
+   Scan the sticker (camera or paste). The app compares the payload to the connected wallet—similar to Face ID for your address.
 
-4. **Searchable Ledger Indexing**  
-   An off-chain indexer/API layer (e.g., Blockfrost) reads chain data and enables fast filters by location, category, and date.
+4. **On-Chain Metadata Logging**  
+   Item data is saved as transaction metadata, making records public, searchable, and tamper-resistant.
 
-5. **Multi-User Status Updates**  
-   Item lifecycle states such as `Pending`, `Claimed`, or `Donated` are recorded via follow-up reference transactions.
+5. **Searchable Ledger Indexing**  
+   An off-chain indexer/API layer (e.g., Blockfrost) reads chain data and enables fast filters.
 
 ## Core Tech Stack
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| Runtime | Bun | Fast package installs and dev runtime with native TypeScript support |
-| Framework | Next.js | Server-side routes for secure API handling |
-| Styling | Tailwind CSS | Rapid interface development |
-| Blockchain SDK | MeshJS | Transaction building, metadata serialization, wallet integration |
-| Indexer / API | Blockfrost | Blockchain reading and transaction history queries |
+| Runtime | Bun / Node | Package management and dev server |
+| Framework | Next.js | App routes and UI |
+| Styling | Tailwind CSS | Interface development |
+| Blockchain SDK | MeshJS | Wallet integration |
+| QR | `qrcode`, `@zxing/browser` | Sticker generation and camera scanning |
+| Indexer / API | Blockfrost | Blockchain reading (planned) |
 
-## Implementation Flow
+## Routes
 
-### 1) Write Flow (Report Found Item)
-- User fills report form in the frontend.
-- MeshJS builds a transaction with item metadata.
-- Transaction is signed in browser wallet.
-- Signed transaction is broadcast to the network.
-
-### 2) Read Flow (Browse Registry)
-- Server-side route queries blockchain data through Blockfrost.
-- Metadata is parsed and normalized.
-- Frontend renders registry items for browsing and filtering.
-
-## Why This Architecture
-
-- **No smart contract required:** basic metadata transactions are enough for the MVP.
-- **No traditional database required:** blockchain serves as the source of truth.
-- **Single language stack:** TypeScript across frontend and backend.
-- **Fast development loop:** Bun + Next.js enables quick iteration. ⚡
-
-## Project Structure
-
-```txt
-app/
-  page.tsx                 # Main dashboard / registry feed
-  report/page.tsx          # Found item form and transaction builder
-  api/items/route.ts       # Server-side fetch/parser for on-chain records
-.env                       # Secrets (e.g., Blockfrost API key)
-```
+| Path | Purpose |
+| --- | --- |
+| `/` | Landing page |
+| `/board` | Bulletin board of found items |
+| `/wallet` | Generate and download your owner QR sticker |
+| `/verify` | Scan or paste a sticker to verify ownership |
 
 ## Getting Started
 
 ### Prerequisites
-- Bun installed
-- Wallet extension configured
-- Blockfrost API key (if using indexer endpoint)
+
+- Node.js 22+ (or Bun)
+- Cardano browser wallet extension
+- Blockfrost API key (optional for future on-chain reads)
 
 ### Install
 
 ```bash
-bun install
+npm install
 ```
 
 ### Run Development Server
 
 ```bash
-bun dev
+npm run dev
 ```
 
 Open `http://localhost:3000`.
 
 ## Environment Variables
 
-Create `.env.local` at the repo root and add the required keys:
+Create `.env.local` at the repo root:
 
 ```bash
 NEXT_PUBLIC_BLOCKFROST_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-- Get a project ID from [blockfrost.io](https://blockfrost.io). Pick the network you want to develop against (Preprod is recommended for testing).
-- The project ID prefix (`preview` / `preprod` / `mainnet`) determines which network the SDK talks to. Your **connected wallet must be set to the same network**, otherwise transaction submission will fail.
-- This variable is exposed to the browser (note the `NEXT_PUBLIC_` prefix) because the demo builds and submits transactions client-side. For production, proxy provider calls through a server route and keep the key private.
-- Restart `bun dev` after editing `.env.local` so Next.js picks up the change.
+- Get a project ID from [blockfrost.io](https://blockfrost.io).
+- Your connected wallet must use the **same network** as the project ID prefix.
+- For production, proxy Blockfrost through a server route and keep keys private.
 
-To fund a Preprod wallet for the demo, request test ADA from the [Cardano testnet faucet](https://docs.cardano.org/cardano-testnet/tools/faucet).
+## QR Payload Format
 
-### Try the simple-transaction demo
+Owner stickers encode:
 
-1. Set `NEXT_PUBLIC_BLOCKFROST_PROJECT_ID` as above and run `bun dev`.
-2. Open `http://localhost:3000/board`.
-3. Connect a Cardano browser wallet (Eternl, Lace, Nami, etc.) on the matching network.
-4. Paste a recipient address and an amount in lovelace (e.g. `2000000` ≈ 2 ADA), then submit.
-5. The panel shows the resulting transaction hash and a Cardanoscan link.
+```txt
+verifind:v1:<bech32-address>
+```
+
+Bare `addr1…` / `addr_test1…` strings are also accepted when scanned.
 
 ## License
 
