@@ -9,10 +9,17 @@ export function AdminItemForm() {
   const [category, setCategory] = useState<ItemCategory>("electronics");
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState<ItemStatus>("found");
-  const [picSeed, setPicSeed] = useState("");
+  const [imageInput, setImageInput] = useState("");
   const [foundAt, setFoundAt] = useState(new Date().toISOString().slice(0, 16));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const getImageUrl = (input: string) => {
+    if (!input) return null;
+    if (input.startsWith("http")) return input;
+    // Use loremflickr for keyword-based images
+    return `https://loremflickr.com/480/320/${encodeURIComponent(input)}`;
+  };
 
   const previewItem: Item = {
     id: "preview",
@@ -20,7 +27,7 @@ export function AdminItemForm() {
     category,
     location: location || "Location Preview",
     status,
-    imageUrl: picSeed ? `https://picsum.photos/seed/${picSeed}/480/320` : null,
+    imageUrl: getImageUrl(imageInput),
     txHash: "0000000000000000000000000000000000000000000000000000000000000000",
     foundAt: new Date(foundAt).toISOString(),
   };
@@ -38,7 +45,7 @@ export function AdminItemForm() {
       category,
       location,
       status,
-      picSeed,
+      imageUrl: getImageUrl(imageInput),
       foundAt: new Date(foundAt).toISOString(),
     });
 
@@ -50,7 +57,7 @@ export function AdminItemForm() {
     // Reset form
     setName("");
     setLocation("");
-    setPicSeed("");
+    setImageInput("");
     setIsSubmitting(false);
   };
 
@@ -143,15 +150,15 @@ export function AdminItemForm() {
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <label htmlFor="picSeed" className="text-sm font-medium text-[var(--color-text-primary)]">
-                Image Seed (Optional)
+              <label htmlFor="imageInput" className="text-sm font-medium text-[var(--color-text-primary)]">
+                Visual Appearance (Keyword or URL)
               </label>
               <input
-                id="picSeed"
+                id="imageInput"
                 type="text"
-                value={picSeed}
-                onChange={(e) => setPicSeed(e.target.value)}
-                placeholder="e.g. vf-backpack (used for picsum seed)"
+                value={imageInput}
+                onChange={(e) => setImageInput(e.target.value)}
+                placeholder="e.g. 'backpack', 'iphone', 'blue wallet' or a direct image URL"
                 className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
               />
             </div>
