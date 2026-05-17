@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { EutxoWatermark } from "./components/EutxoWatermark";
+import { Providers } from "./components/Providers";
 import { Analytics } from "@vercel/analytics/react";
 
 const interTight = Inter_Tight({
@@ -28,7 +29,7 @@ export default function RootLayout({
     >
       <body>
         <EutxoWatermark />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
