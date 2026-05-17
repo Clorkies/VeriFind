@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { Item } from "@/lib/mockItems";
 import { truncateTxId } from "@/lib/mockItems";
 import { useReveal } from "./useReveal";
@@ -135,27 +136,20 @@ export function ItemCard({ item }: ItemCardProps) {
             <span>View Details</span>
             <span aria-hidden>→</span>
           </button>
+          <Link
+            href="/verify"
+            className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+          >
+            Scan owner QR
+          </Link>
           <a
             href={explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            aria-label="View on-chain report transaction"
           >
-            <svg
-              className="h-3 w-3"
-              viewBox="0 0 12 12"
-              fill="none"
-              aria-hidden
-            >
-              <path
-                d="M4 2H2v8h8V8M7 2h3v3M5 7l5-5"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Verify Proof
+            On-chain ↗
           </a>
         </div>
       </div>
