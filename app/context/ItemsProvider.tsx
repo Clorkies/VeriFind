@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import type { Item } from "@/lib/itemTypes";
+import type { Item, ItemStatus } from "@/lib/itemTypes";
 import { MOCK_ITEMS } from "@/lib/mockItems";
 
 type ItemsContextType = {
