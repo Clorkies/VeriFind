@@ -101,15 +101,6 @@ export function ItemCard({ item: initialItem }: ItemCardProps) {
   const isOwner = item.ownerAddress && 
     walletAddresses.map(a => a.toLowerCase()).includes(item.ownerAddress.toLowerCase());
 
-  const handleClaim = async () => {
-    setIsClaiming(true);
-    // Simulate transaction to update metadata status to 'claimed'
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setItem(prev => ({ ...prev, status: "claimed" }));
-    setIsClaiming(false);
-    console.log(`Item ${item.id} claimed by owner ${item.ownerAddress}`);
-  };
-
   return (
     <article
       ref={ref}
@@ -157,58 +148,38 @@ export function ItemCard({ item: initialItem }: ItemCardProps) {
           </span>
         </div>
         
-        {isOwner && item.status === "found" ? (
-          <div className="space-y-3 pt-2">
-            <div className="rounded-lg bg-emerald-500/10 p-2.5 border border-emerald-500/20">
-              <p className="text-[10px] text-emerald-300 leading-tight">
-                This item&apos;s registered sticker address matches your wallet. You can claim it on-chain to update its status.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleClaim}
-              disabled={isClaiming}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {isClaiming ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Updating Ledger...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-3 w-3" />
-                  Claim this item
-                </>
-              )}
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)] transition hover:text-[var(--color-accent)]"
-            >
-              <span>View Details</span>
-              <span aria-hidden>→</span>
-            </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)] transition hover:text-[var(--color-accent)]"
+          >
+            <span>View Details</span>
+            <span aria-hidden>→</span>
+          </button>
+          
+          {item.status === "found" ? (
             <Link
-              href="/verify"
+              href={`/claim/${item.id}`}
               className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
             >
-              Scan owner QR
+              Claim Item
             </Link>
-            <a
-              href={explorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-              aria-label="View on-chain report transaction"
-            >
-              On-chain ↗
-            </a>
-          </div>
-        )}
+          ) : (
+            <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20">
+              Claimed ✓
+            </div>
+          )}
+
+          <a
+            href={explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            aria-label="View on-chain report transaction"
+          >
+            On-chain ↗
+          </a>
+        </div>
       </div>
     </article>
   );

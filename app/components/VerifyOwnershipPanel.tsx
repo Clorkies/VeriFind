@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { Check, ScanLine, X } from "lucide-react";
+import { Check, Loader2, ScanLine, X } from "lucide-react";
 import { useWallet } from "@/app/context/WalletProvider";
 import { QrScanner } from "./QrScanner";
 import { verifyOwnership } from "@/lib/verifyOwnership";
+import { Item } from "@/lib/itemTypes";
+import { useItems } from "@/app/context/ItemsProvider";
+import { useRouter } from "next/navigation";
 
 type VerifyState =
   | { kind: "idle" }
@@ -13,11 +16,15 @@ type VerifyState =
   | { kind: "mismatch"; scanned: string }
   | { kind: "invalid" };
 
-export function VerifyOwnershipPanel() {
+export function VerifyOwnershipPanel({ item }: { item: Item }) {
   const { connectedWallet, walletAddresses } = useWallet();
+  const { updateItemStatus } = useItems();
+  const router = useRouter();
+  
   const [manualInput, setManualInput] = useState("");
   const [state, setState] = useState<VerifyState>({ kind: "idle" });
   const [scannerPaused, setScannerPaused] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const runVerify = useCallback(
     (raw: string) => {
@@ -30,14 +37,29 @@ export function VerifyOwnershipPanel() {
         setState({ kind: "invalid" });
         return;
       }
-      if (result.matched) {
-        setState({ kind: "matched", address: result.scannedAddress });
-        setScannerPaused(true);
-      } else {
+
+      // Check 1: Does the scanned QR match the user's wallet?
+      if (!result.matched) {
         setState({ kind: "mismatch", scanned: result.scannedAddress });
+        return;
       }
+
+      // Check 2: Does the scanned QR match the item's registered owner?
+      // (Case-insensitive comparison for robustness)
+      const registeredOwner = item.ownerAddress?.trim().toLowerCase();
+      const scannedAddress = result.scannedAddress.trim().toLowerCase();
+
+      if (registeredOwner && registeredOwner !== scannedAddress) {
+        // It's the user's own sticker, but NOT the one registered to this item
+        setState({ kind: "mismatch", scanned: result.scannedAddress });
+        return;
+      }
+
+      // If both checks pass, it's a match
+      setState({ kind: "matched", address: result.scannedAddress });
+      setScannerPaused(true);
     },
-    [connectedWallet, walletAddresses],
+    [connectedWallet, walletAddresses, item.ownerAddress],
   );
 
   const handleScan = useCallback(
@@ -48,11 +70,40 @@ export function VerifyOwnershipPanel() {
     [runVerify],
   );
 
+  const handleFinalClaim = async () => {
+    setIsClaiming(true);
+    // Simulate transaction delay
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    updateItemStatus(item.id, "claimed");
+    setIsClaiming(false);
+    router.push("/board");
+  };
+
   const reset = () => {
     setState({ kind: "idle" });
     setManualInput("");
     setScannerPaused(false);
   };
+
+  if (item.status === "claimed") {
+    return (
+      <div className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 p-6 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 mb-4">
+          <Check className="h-6 w-6" />
+        </div>
+        <h3 className="text-lg font-bold text-emerald-300">Item Successfully Claimed</h3>
+        <p className="mt-2 text-sm text-[var(--color-text-soft)]">
+          The ledger has been updated. This item is now marked as claimed on-chain.
+        </p>
+        <Link
+          href="/board"
+          className="btn-primary mt-6 inline-flex rounded-lg px-6 py-2.5 text-sm font-semibold"
+        >
+          Return to Bulletin Board
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -70,9 +121,8 @@ export function VerifyOwnershipPanel() {
           Scan owner sticker
         </h2>
         <p className="text-sm text-[var(--color-text-soft)]">
-          Point your camera at the QR code printed on the item. The finder does
-          not need to know your signature or vkey—only that the sticker matches
-          your wallet when you claim it.
+          Point your camera at the QR code printed on the item. If the sticker 
+          matches your wallet, the option to claim on-chain will appear.
         </p>
         <QrScanner onScan={handleScan} paused={scannerPaused} />
       </section>
@@ -117,25 +167,32 @@ export function VerifyOwnershipPanel() {
       {state.kind === "matched" ? (
         <div
           role="status"
-          className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 p-4"
+          className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 p-4 animate-in fade-in slide-in-from-bottom-2"
         >
           <div className="flex items-center gap-2 font-semibold text-emerald-300">
             <Check className="h-5 w-5" />
             Owner verified
           </div>
           <p className="mt-2 text-sm text-[var(--color-text-soft)]">
-            This sticker belongs to your connected wallet. You can proceed with
-            a claim on the bulletin board.
+            This sticker belongs to your connected wallet. You can now finalize 
+            the claim to update the decentralized ledger.
           </p>
-          <p className="mt-2 break-all font-mono text-xs text-[var(--color-text-primary)]">
-            {state.address}
-          </p>
-          <Link
-            href="/board"
-            className="btn-primary mt-4 inline-flex rounded-lg px-4 py-2 text-sm font-semibold"
+          
+          <button
+            type="button"
+            onClick={handleFinalClaim}
+            disabled={isClaiming}
+            className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold shadow-lg shadow-emerald-500/10"
           >
-            Go to bulletin board
-          </Link>
+            {isClaiming ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Updating Ledger...
+              </>
+            ) : (
+              "Confirm Claim on Ledger"
+            )}
+          </button>
         </div>
       ) : null}
 
