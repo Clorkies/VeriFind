@@ -203,14 +203,14 @@ export function VerifyOwnershipPanel({ item }: { item: Item }) {
         >
           <div className="flex items-center gap-2 font-semibold text-amber-200">
             <X className="h-5 w-5" />
-            Address does not match
+            Verification failed
           </div>
           <p className="mt-2 text-sm text-[var(--color-text-soft)]">
-            The scanned sticker belongs to a different wallet than the one you
-            have connected.
+            The scanned sticker does not match the owner address registered for
+            this item, or it does not belong to your connected wallet.
           </p>
           <p className="mt-2 break-all font-mono text-xs text-[var(--color-text-primary)]">
-            {state.scanned}
+            Scanned: {state.scanned}
           </p>
         </div>
       ) : null}
