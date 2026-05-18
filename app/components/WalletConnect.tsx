@@ -170,7 +170,7 @@ export function WalletConnect() {
                     </option>
                     {availableWallets.map((walletName) => (
                       <option key={walletName} value={walletName}>
-                        {walletName}
+                        {walletName.charAt(0).toUpperCase() + walletName.slice(1)}
                       </option>
                     ))}
                   </select>

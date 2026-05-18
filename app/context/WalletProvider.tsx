@@ -47,42 +47,78 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const [change, used] = await Promise.all([
-        wallet.getChangeAddressBech32(),
-        wallet.getUsedAddressesBech32(),
-      ]);
+      // Some wallets might fail to provide addresses if they are locked or in a specific state
+      const change = await wallet.getChangeAddressBech32();
+      let used: string[] = [];
+      try {
+        used = await wallet.getUsedAddressesBech32();
+      } catch (e) {
+        console.warn("Could not fetch used addresses, falling back to change address only:", e);
+      }
+      
       setChangeAddress(change);
       setWalletAddresses(Array.from(new Set([change, ...used])));
-    } catch {
+    } catch (e) {
+      console.error("Failed to refresh wallet addresses:", e);
+      // Only clear if we really can't get even the change address
       setChangeAddress(null);
       setWalletAddresses([]);
     }
   }, [wallet]);
 
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 5;
+
     const init = async () => {
       try {
         const installed = await MeshCardanoBrowserWallet.getInstalledWallets();
-        const names = installed.map((w) => w.name);
+        let names = installed.map((w) => w.name.toLowerCase());
+        
+        // Safeguard: Manually check for common wallets if they are injected but not caught by Mesh
+        if (typeof window !== "undefined" && (window as any).cardano) {
+          const cardano = (window as any).cardano;
+          const commonWallets = ["lace", "eternl", "nami", "flint", "yoroi", "typhoncip30", "vespr", "nufi"];
+          commonWallets.forEach((w) => {
+            if (cardano[w] && !names.includes(w)) {
+              names.push(w);
+            }
+          });
+        }
+
+        if (names.length === 0 && retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(init, 500);
+          return;
+        }
+
         setAvailableWallets(names);
 
         const lastWallet =
           typeof window !== "undefined"
             ? localStorage.getItem(STORAGE_KEY)
             : null;
-        if (!lastWallet || !names.includes(lastWallet)) {
-          if (lastWallet && !names.includes(lastWallet)) {
-            localStorage.removeItem(STORAGE_KEY);
-          }
-          return;
-        }
+        
+        if (!lastWallet) return;
 
-        setSelectedWallet(lastWallet);
-        const restored = await MeshCardanoBrowserWallet.enable(lastWallet);
-        setWallet(restored);
-        setConnectedWallet(lastWallet);
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
+        const normalizedLast = lastWallet.toLowerCase();
+
+        // If we found the wallet in the list, try to restore it
+        if (names.includes(normalizedLast)) {
+          setSelectedWallet(normalizedLast);
+          try {
+            const restored = await MeshCardanoBrowserWallet.enable(normalizedLast);
+            setWallet(restored);
+            setConnectedWallet(normalizedLast);
+          } catch (e) {
+            console.error("Failed to restore wallet:", e);
+          }
+        } else if (retryCount >= maxRetries) {
+          // Only remove if we've exhausted retries and it's definitely not there
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch (e) {
+        console.error("Wallet initialization error:", e);
       }
     };
 
