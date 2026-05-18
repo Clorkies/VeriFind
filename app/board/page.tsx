@@ -2,7 +2,6 @@ import { BoardContent } from "../components/BoardContent";
 import { Footer } from "../components/Footer";
 import { GuestBanner } from "../components/GuestBanner";
 import { NavBar } from "../components/NavBar";
-import { MOCK_ITEMS } from "@/lib/mockItems";
 
 export default async function BoardPage({
   searchParams,
@@ -15,7 +14,7 @@ export default async function BoardPage({
   return (
     <div className="relative flex min-h-screen flex-col">
       <NavBar />
-      <BoardContent items={MOCK_ITEMS} showSkeleton={showSkeleton} />
+      <BoardContent showSkeleton={showSkeleton} />
       <Footer />
       <GuestBanner />
     </div>

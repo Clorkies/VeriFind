@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Item } from "@/lib/itemTypes";
 import { truncateTxId } from "@/lib/mockItems";
 import { useReveal } from "./useReveal";
@@ -88,6 +88,10 @@ export function ItemCard({ item: initialItem }: ItemCardProps) {
   const [item, setItem] = useState(initialItem);
   const [isClaiming, setIsClaiming] = useState(false);
   const { walletAddresses } = useWallet();
+
+  useEffect(() => {
+    setItem(initialItem);
+  }, [initialItem]);
   
   const short = truncateTxId(item.txHash);
   const explorerUrl = `${EXPLORER_TX}${item.txHash}`;

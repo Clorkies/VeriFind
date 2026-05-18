@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Item, ItemCategory, ItemStatus } from "@/lib/itemTypes";
 import { ItemCard } from "./ItemCard";
 import { parseOwnerQrPayload } from "@/lib/qrPayload";
+import { useItems } from "@/app/context/ItemsProvider";
 
 export function AdminItemForm() {
+  const { addItem } = useItems();
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("electronics");
   const [location, setLocation] = useState("");
@@ -29,7 +31,7 @@ export function AdminItemForm() {
     category,
     location: location || "Location Preview",
     status,
-    imageUrl: getImageUrl(imageInput),
+    imageUrl: getImageUrl(imageInput) || undefined,
     txHash: "0000000000000000000000000000000000000000000000000000000000000000",
     foundAt: new Date(foundAt).toISOString(),
     ownerAddress: parseOwnerQrPayload(ownerAddress) || undefined,
@@ -43,20 +45,26 @@ export function AdminItemForm() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log("Creating item:", {
+    const newItem: Item = {
+      id: Date.now().toString(),
       name,
       category,
       location,
       status,
-      imageUrl: getImageUrl(imageInput),
-      ownerAddress: parseOwnerQrPayload(ownerAddress),
+      imageUrl: getImageUrl(imageInput) || undefined,
+      txHash: "0000000000000000000000000000000000000000000000000000000000000000",
+      ownerAddress: parseOwnerQrPayload(ownerAddress) || undefined,
       foundAt: new Date(foundAt).toISOString(),
-    });
+    };
+
+    console.log("Creating item:", newItem);
+    addItem(newItem);
 
     setMessage({
       type: "success",
       text: `Successfully registered "${name}" on the mock ledger!`,
     });
+
     
     // Reset form
     setName("");
