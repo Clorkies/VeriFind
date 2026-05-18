@@ -6,7 +6,8 @@ import {
   ArrowDown,
   ArrowRight,
   Check,
-  Link2,
+  QrCode,
+  ScanLine,
   Search,
   Wallet,
 } from "lucide-react";
@@ -50,20 +51,30 @@ const STEPS: {
     labelClass: "text-[var(--color-accent)]",
   },
   {
-    key: "prove",
+    key: "tag",
     label: "Step 3",
-    title: "Prove Ownership",
-    body: "Found a match? Answer the finder's secret question. This proof is hashed and stored for verification.",
-    Icon: Link2,
-    preview: <PreviewProof />,
+    title: "Tag Your Items",
+    body: "Download your personal QR sticker from VeriFind. Print it and attach it to laptops, IDs, and valuables—your public address is embedded in the code.",
+    Icon: QrCode,
+    preview: <PreviewQrSticker />,
+    iconGlow: GLOW_STEP,
+    labelClass: "text-[var(--color-accent)]",
+  },
+  {
+    key: "verify",
+    label: "Step 4",
+    title: "Scan to Verify",
+    body: "Found a match? Scan the sticker in the app. If the code matches your connected wallet, ownership is confirmed—no signature or vkey required from the finder.",
+    Icon: ScanLine,
+    preview: <PreviewScanVerify />,
     iconGlow: GLOW_STEP,
     labelClass: "text-[var(--color-accent)]",
   },
   {
     key: "return",
-    label: "Step 4",
+    label: "Step 5",
     title: "Immutable Return",
-    body: "Once verified, the transaction is settled. The ledger is updated, and your item is VeriFound.",
+    body: "Once verified, the claim is recorded on-chain. The ledger is updated, and your item is VeriFound.",
     Icon: Check,
     preview: <PreviewVerified />,
     iconGlow: GLOW_VERIFIED,
@@ -92,7 +103,7 @@ export function HowItWorks() {
             How it works
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-3xl">
-            From wallet to VeriFound in four steps
+            From wallet to VeriFound in five steps
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-[var(--color-text-soft)] md:text-base">
             A simple path through the Cardano ledger—built so anyone on campus
@@ -248,29 +259,40 @@ function PreviewBoard() {
   );
 }
 
-function PreviewProof() {
+function PreviewQrSticker() {
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-white/10 bg-[var(--color-bg)]/50 px-3 py-2">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-soft)]">
-          Secret prompt
-        </p>
-        <div className="mt-2 h-2 w-3/4 rounded bg-[var(--color-text-soft)]/18" />
-      </div>
-      <div className="flex items-center gap-2">
-        <Link2 className="h-4 w-4 shrink-0 text-[var(--color-accent)]" strokeWidth={1.75} />
-        <div className="flex-1 font-mono text-[9px] leading-relaxed tracking-tight text-[var(--color-text-soft)]/80">
-          SHA-256 proof · hashed on-chain placeholder
+      <div className="mx-auto grid h-24 w-24 place-items-center rounded-lg border border-white/10 bg-white p-2">
+        <div className="grid grid-cols-3 gap-0.5">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 w-2 ${i % 2 === 0 ? "bg-[var(--color-bg)]" : "bg-transparent"}`}
+            />
+          ))}
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-1.5">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-3 rounded bg-[linear-gradient(90deg,transparent,var(--color-accent)/40,transparent)] opacity-70"
-          />
-        ))}
+      <p className="text-center font-mono text-[9px] text-[var(--color-text-soft)]">
+        verifind:v1:addr…
+      </p>
+      <div className="h-2 w-full rounded-full bg-[var(--color-accent)]/50" />
+    </div>
+  );
+}
+
+function PreviewScanVerify() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-center gap-3">
+        <ScanLine className="h-8 w-8 text-[var(--color-accent)]" strokeWidth={1.5} />
+        <span className="text-lg text-[var(--color-text-soft)]">→</span>
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500/20 text-emerald-300">
+          <Check className="h-5 w-5" strokeWidth={2.25} />
+        </div>
       </div>
+      <p className="text-center text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-soft)]">
+        Wallet address match
+      </p>
     </div>
   );
 }

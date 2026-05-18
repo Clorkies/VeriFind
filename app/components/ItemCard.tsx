@@ -1,9 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import type { Item } from "@/lib/mockItems";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { Item } from "@/lib/itemTypes";
 import { truncateTxId } from "@/lib/mockItems";
 import { useReveal } from "./useReveal";
+import { useWallet } from "@/app/context/WalletProvider";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 function MetadataIcon({ className }: { className?: string }) {
   return (
@@ -80,11 +84,22 @@ function pickMediaAspect(seed: string) {
   return MEDIA_ASPECTS[hash % MEDIA_ASPECTS.length];
 }
 
-export function ItemCard({ item }: ItemCardProps) {
+export function ItemCard({ item: initialItem }: ItemCardProps) {
+  const [item, setItem] = useState(initialItem);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const { walletAddresses } = useWallet();
+
+  useEffect(() => {
+    setItem(initialItem);
+  }, [initialItem]);
+  
   const short = truncateTxId(item.txHash);
   const explorerUrl = `${EXPLORER_TX}${item.txHash}`;
   const ref = useReveal<HTMLElement>();
   const mediaAspect = pickMediaAspect(item.id);
+
+  const isOwner = item.ownerAddress && 
+    walletAddresses.map(a => a.toLowerCase()).includes(item.ownerAddress.toLowerCase());
 
   return (
     <article
@@ -109,8 +124,13 @@ export function ItemCard({ item }: ItemCardProps) {
         )}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[var(--color-bg)]/85 to-transparent" />
 
-        <div className="absolute right-3 top-3">
+        <div className="absolute right-3 top-3 flex flex-col items-end gap-2">
           <StatusBadge status={item.status} />
+          {isOwner && item.status === "found" && (
+            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-400 backdrop-blur-md border border-emerald-500/30">
+              Your Item
+            </span>
+          )}
         </div>
       </div>
 
@@ -127,6 +147,7 @@ export function ItemCard({ item }: ItemCardProps) {
             {short}
           </span>
         </div>
+        
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <button
             type="button"
@@ -135,27 +156,28 @@ export function ItemCard({ item }: ItemCardProps) {
             <span>View Details</span>
             <span aria-hidden>→</span>
           </button>
+          
+          {item.status === "found" ? (
+            <Link
+              href={`/claim/${item.id}`}
+              className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            >
+              Claim Item
+            </Link>
+          ) : (
+            <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20">
+              Claimed ✓
+            </div>
+          )}
+
           <a
             href={explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            aria-label="View on-chain report transaction"
           >
-            <svg
-              className="h-3 w-3"
-              viewBox="0 0 12 12"
-              fill="none"
-              aria-hidden
-            >
-              <path
-                d="M4 2H2v8h8V8M7 2h3v3M5 7l5-5"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Verify Proof
+            On-chain ↗
           </a>
         </div>
       </div>

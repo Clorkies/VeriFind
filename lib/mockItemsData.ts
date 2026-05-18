@@ -23,6 +23,7 @@ type MockRow = {
   foundAt: string;
   /** If set, keeps stable demo tx (e.g. original 14). */
   txHash?: string;
+  ownerAddress?: string;
 };
 
 /**
@@ -39,6 +40,7 @@ const MOCK_ROWS: MockRow[] = [
     foundAt: "2026-04-22T14:30:00.000Z",
     txHash:
       "5b2c9a1f4e3d8c7b6a594837261504132f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c",
+    ownerAddress: "addr_test1vzfxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
   },
   {
     name: "TI-84 Calculator",
@@ -608,5 +610,6 @@ export const MOCK_ITEMS_DATA: Item[] = MOCK_ROWS.map((row, idx) => {
     imageUrl: row.picSeed ? pic(row.picSeed) : null,
     txHash: row.txHash ?? txForSlot(slot),
     foundAt: row.foundAt,
+    ownerAddress: row.ownerAddress,
   };
 });

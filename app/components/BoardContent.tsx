@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Item } from "@/lib/mockItems";
 import { FilterPills, type FilterId } from "./FilterPills";
 import { ItemCard } from "./ItemCard";
 import { MasonryGrid } from "./MasonryGrid";
 import { SearchBar } from "./SearchBar";
 import { SkeletonCard } from "./SkeletonCard";
+import { useItems } from "@/app/context/ItemsProvider";
 
 const SKELETON_HEIGHTS = [
   "h-52",
@@ -24,11 +24,11 @@ const SKELETON_HEIGHTS = [
 ];
 
 type BoardContentProps = {
-  items: Item[];
   showSkeleton: boolean;
 };
 
-export function BoardContent({ items, showSkeleton }: BoardContentProps) {
+export function BoardContent({ showSkeleton }: BoardContentProps) {
+  const { items } = useItems();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterId>("all");
 
@@ -71,8 +71,8 @@ export function BoardContent({ items, showSkeleton }: BoardContentProps) {
           className="animate-fade-up max-w-2xl text-sm text-[var(--color-text-soft)] sm:text-base"
           style={{ animationDelay: "0.15s" }}
         >
-          Every lost or found item, recorded, signed, and verifiable on-chain.
-          Tap any card to see the receipt.
+          Every lost or found item, recorded on-chain. Owners tag belongings with
+          a personal QR sticker—scan to verify, no signature required.
         </p>
       </header>
 

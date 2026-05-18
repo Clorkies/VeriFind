@@ -47,8 +47,8 @@ export function Hero() {
         >
           The immutable, decentralized lost &amp; found registry for the
           CIT-U campus. Every entry is a verifiable receipt, no passwords,
-          no gatekeepers, just{" "}
-          <span className="font-semibold text-[var(--color-accent)]">on-chain proof</span>.
+          no gatekeepers—tag items with your{" "}
+          <span className="font-semibold text-[var(--color-accent)]">owner QR sticker</span>.
         </p>
 
         <div
@@ -63,6 +63,13 @@ export function Hero() {
             <span aria-hidden>→</span>
           </Link>
 
+          <Link
+            href="/wallet"
+            className="btn-ghost inline-flex items-center gap-2 rounded-xl px-6 py-4 text-base font-medium transition hover:-translate-y-0.5"
+          >
+            My QR sticker
+            <span aria-hidden>→</span>
+          </Link>
           <Link
             href="#how-it-works"
             className="btn-ghost inline-flex items-center gap-2 rounded-xl px-6 py-4 text-base font-medium transition hover:-translate-y-0.5"

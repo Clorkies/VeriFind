@@ -15,8 +15,8 @@ export function Footer() {
               Built for a transparent campus lost-and-found ledger
             </h2>
             <p className="text-sm leading-relaxed text-[var(--color-text-soft)]">
-              Track finds with on-chain metadata, browse the bulletin, and settle
-              claims via wallet proof. Source code and issues live on GitHub.
+              Track finds with on-chain metadata, print your owner QR sticker,
+              and verify claims by scanning the tag. Source code on GitHub.
             </p>
           </div>
 
