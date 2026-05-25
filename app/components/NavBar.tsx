@@ -66,7 +66,6 @@ export function NavBar() {
         <nav className="hidden items-center gap-1 md:flex">
           <NavLink href="/board">Board</NavLink>
           <NavLink href="/my-claims">My Claims</NavLink>
-          <NavLink href="/admin">Admin</NavLink>
           <NavLink href="/#how-it-works">How it works</NavLink>
         </nav>
       </div>
