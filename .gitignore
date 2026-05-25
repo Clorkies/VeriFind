@@ -45,6 +45,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-#Docker files
+# Docker files
 Dockerfile
 .dockerignore
+
+# Supabase Files
+.env
+.env.local
