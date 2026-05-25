@@ -57,7 +57,7 @@ export default function MyClaimsPage() {
             type="text"
             value={studentId}
             onChange={(event) => setStudentId(event.target.value)}
-            placeholder="e.g. 2023-12345"
+            placeholder="e.g. 21-2345-678"
             className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
           />
         </div>

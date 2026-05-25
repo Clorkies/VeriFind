@@ -20,15 +20,21 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
-    const reference = submitClaim({
-      itemId,
-      studentId: studentId.trim(),
-      studentName: studentName.trim(),
-      contactInfo: contactInfo.trim(),
-      proofDescription: proofDescription.trim(),
-    });
-    setClaimId(reference);
-    setIsSubmitting(false);
+    try {
+      const reference = await submitClaim({
+        itemId,
+        studentId: studentId.trim(),
+        studentName: studentName.trim(),
+        contactInfo: contactInfo.trim(),
+        proofDescription: proofDescription.trim(),
+      });
+      setClaimId(reference);
+    } catch (error) {
+      console.error("Failed to submit claim:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (claimId) {
@@ -40,7 +46,7 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
         <h3 className="text-lg font-bold text-emerald-300">Claim Submitted</h3>
         <p className="mt-2 text-sm text-[var(--color-text-soft)]">
           Your claim for <span className="font-semibold">{itemName}</span> is now in the
-          admin review queue.
+          Staff Review queue.
         </p>
         <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-xs text-[var(--color-text-soft)]">
           Reference number
@@ -71,7 +77,7 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
           required
           value={studentId}
           onChange={(event) => setStudentId(event.target.value)}
-          placeholder="e.g. 2023-12345"
+          placeholder="e.g. 21-2345-678"
           className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
         />
       </div>

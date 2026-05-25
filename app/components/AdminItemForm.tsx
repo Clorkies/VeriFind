@@ -12,6 +12,7 @@ export function AdminItemForm() {
     useItems();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [hiddenDescription, setHiddenDescription] = useState("");
   const [category, setCategory] = useState<ItemCategory>("electronics");
   const [locationFound, setLocationFound] = useState("");
   const [dateFound, setDateFound] = useState(new Date().toISOString().slice(0, 16));
@@ -33,6 +34,7 @@ export function AdminItemForm() {
     id: "preview",
     name: name || "Item Name Preview",
     description: description || "Description preview for the item.",
+    hiddenDescription: hiddenDescription || "Hidden details preview.",
     category,
     locationFound: locationFound || "Location Preview",
     dateFound: new Date(dateFound).toISOString(),
@@ -63,30 +65,70 @@ export function AdminItemForm() {
     setIsSubmitting(true);
     setMessage(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      await logItem({
+        name: name.trim(),
+        description: description.trim(),
+        hiddenDescription: hiddenDescription.trim(),
+        category,
+        locationFound: locationFound.trim(),
+        dateFound: new Date(dateFound).toISOString(),
+        photoUrl: getPhotoUrl(photoInput),
+        loggedBy: ADMIN_ID,
+        custodyStatus,
+      });
 
-    logItem({
-      name: name.trim(),
-      description: description.trim(),
-      category,
-      locationFound: locationFound.trim(),
-      dateFound: new Date(dateFound).toISOString(),
-      photoUrl: getPhotoUrl(photoInput),
-      loggedBy: ADMIN_ID,
-      custodyStatus,
-    });
+      setMessage({
+        type: "success",
+        text: `Logged "${name}" in the registry.`,
+      });
 
-    setMessage({
-      type: "success",
-      text: `Logged "${name}" in the registry.`,
-    });
+      setName("");
+      setDescription("");
+      setHiddenDescription("");
+      setLocationFound("");
+      setPhotoInput("");
+      setCustodyStatus("held");
+    } catch (error) {
+      console.error("Failed to log item:", error);
+      setMessage({
+        type: "error",
+        text: "Failed to log item. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    setName("");
-    setDescription("");
-    setLocationFound("");
-    setPhotoInput("");
-    setCustodyStatus("held");
-    setIsSubmitting(false);
+  const handleApprove = async (claimId: string) => {
+    try {
+      await approveClaim(claimId, ADMIN_ID, reviewNotes[claimId]);
+    } catch (error) {
+      console.error("Failed to approve claim:", error);
+      alert("Failed to approve claim.");
+    }
+  };
+
+  const handleReject = async (claimId: string) => {
+    try {
+      await rejectClaim(
+        claimId,
+        ADMIN_ID,
+        reviewNotes[claimId] ?? "Rejected by admin.",
+      );
+    } catch (error) {
+      console.error("Failed to reject claim:", error);
+      alert("Failed to reject claim.");
+    }
+  };
+
+  const handleRelease = async (itemId: string) => {
+    try {
+      await releaseItem(itemId, ADMIN_ID);
+    } catch (error) {
+      console.error("Failed to release item:", error);
+      alert("Failed to release item.");
+    }
   };
 
   return (
@@ -144,16 +186,33 @@ export function AdminItemForm() {
                   htmlFor="description"
                   className="text-sm font-medium text-[var(--color-text-primary)]"
                 >
-                  Item Description
+                  Public Item Description
                 </label>
                 <textarea
                   id="description"
                   required
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Color, brand, markings, condition, or contents"
-                  rows={3}
+                  placeholder="Visible on the board: Color, brand, markings, condition"
+                  rows={2}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label
+                  htmlFor="hiddenDescription"
+                  className="text-sm font-medium text-[var(--color-text-primary)]"
+                >
+                  Private Verification Details (Staff Only)
+                </label>
+                <textarea
+                  id="hiddenDescription"
+                  value={hiddenDescription}
+                  onChange={(event) => setHiddenDescription(event.target.value)}
+                  placeholder="Hidden from board: Serial number, contents of bag, lock screen photo description, etc."
+                  rows={2}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-blue-500/5 px-4 py-2.5 text-sm transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
                 />
               </div>
 
@@ -305,6 +364,17 @@ export function AdminItemForm() {
                     </span>
                   </div>
 
+                  {item.hiddenDescription && (
+                    <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
+                        Staff Verification Secret
+                      </p>
+                      <p className="mt-1 text-xs text-blue-200/80">
+                        {item.hiddenDescription}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
                     {itemClaims.map((claim) => (
                       <div
@@ -362,26 +432,14 @@ export function AdminItemForm() {
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  approveClaim(
-                                    claim.claimId,
-                                    ADMIN_ID,
-                                    reviewNotes[claim.claimId],
-                                  )
-                                }
+                                onClick={() => handleApprove(claim.claimId)}
                                 className="rounded-lg bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
                               >
                                 Approve
                               </button>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  rejectClaim(
-                                    claim.claimId,
-                                    ADMIN_ID,
-                                    reviewNotes[claim.claimId] ?? "Rejected by admin.",
-                                  )
-                                }
+                                onClick={() => handleReject(claim.claimId)}
                                 className="rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/30"
                               >
                                 Reject
@@ -404,7 +462,7 @@ export function AdminItemForm() {
                     {approvedClaim ? (
                       <button
                         type="button"
-                        onClick={() => releaseItem(item.id, ADMIN_ID)}
+                        onClick={() => handleRelease(item.id)}
                         disabled={item.custodyStatus === "released"}
                         className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
                       >

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { FoundItem } from "@/lib/itemTypes";
-import { truncateTxId } from "@/lib/mockItems";
+import { truncateTxId } from "@/lib/formatUtils";
 import { useReveal } from "./useReveal";
 
 function MetadataIcon({ className }: { className?: string }) {

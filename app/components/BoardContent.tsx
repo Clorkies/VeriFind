@@ -27,10 +27,12 @@ type BoardContentProps = {
   showSkeleton: boolean;
 };
 
-export function BoardContent({ showSkeleton }: BoardContentProps) {
-  const { items } = useItems();
+export function BoardContent({ showSkeleton: initialShowSkeleton }: BoardContentProps) {
+  const { items, loading } = useItems();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterId>("open");
+
+  const showSkeleton = initialShowSkeleton || loading;
 
   const filtered = useMemo(() => {
     let list = items;
