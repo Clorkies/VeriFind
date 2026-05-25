@@ -4,33 +4,29 @@ import { useItems } from "@/app/context/ItemsProvider";
 import { useParams, useRouter } from "next/navigation";
 import { NavBar } from "@/app/components/NavBar";
 import { Footer } from "@/app/components/Footer";
-import { VerifyOwnershipPanel } from "@/app/components/VerifyOwnershipPanel";
 import { ItemCard } from "@/app/components/ItemCard";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Item } from "@/lib/itemTypes";
+import { useEffect, useMemo } from "react";
+import { ClaimRequestForm } from "@/app/components/ClaimRequestForm";
 
 export default function ClaimPage() {
   const { id } = useParams();
   const { items } = useItems();
   const router = useRouter();
-  const [item, setItem] = useState<Item | null>(null);
+  const item = useMemo(
+    () => items.find((i) => i.id === id) ?? null,
+    [items, id],
+  );
 
   useEffect(() => {
-    const found = items.find((i) => i.id === id);
-    if (found) {
-      setItem(found);
-    } else {
-      // Small delay to account for potential loading/hydration
-      const timer = setTimeout(() => {
-        const refound = items.find((i) => i.id === id);
-        if (!refound) router.push("/board");
-        else setItem(refound);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [id, items, router]);
+    if (item) return;
+    const timer = setTimeout(() => {
+      const refound = items.find((i) => i.id === id);
+      if (!refound) router.push("/board");
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [id, item, items, router]);
 
   if (!item) {
     return (
@@ -57,15 +53,15 @@ export default function ClaimPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_86%,transparent)] px-3 py-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <span className="text-xs font-medium tracking-wide text-[var(--color-text-soft)]">
-              Verification Session
+              Claim Request
             </span>
           </div>
           <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             Claiming <span className="text-[var(--color-accent)]">{item.name}</span>
           </h1>
           <p className="max-w-2xl text-sm text-[var(--color-text-soft)] sm:text-base">
-            You are initiating a claim for this item. To prove ownership, please
-            scan the VeriFind sticker attached to the physical object.
+            Submit your Student ID and a clear description. Staff will verify your
+            details against the physical item before approval.
           </p>
         </header>
 
@@ -79,16 +75,15 @@ export default function ClaimPage() {
             </div>
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-xs text-[var(--color-text-soft)] leading-relaxed">
               <p>
-                <strong>Security Note:</strong> The verification process is
-                handled entirely on the client-side. Your wallet address is
-                compared against the address encoded in the QR sticker. If they
-                match, you can submit the claim transaction to the mock ledger.
+                <strong>Verification Note:</strong> Claims are reviewed by Lost & Found
+                staff. Approval requires matching your description with the item and
+                confirming your Student ID in person.
               </p>
             </div>
           </div>
 
           <div className="panel-card rounded-2xl p-6 sm:p-8">
-            <VerifyOwnershipPanel item={item} />
+            <ClaimRequestForm itemId={item.id} itemName={item.name} />
           </div>
         </div>
       </main>
