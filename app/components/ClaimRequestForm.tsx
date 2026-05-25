@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useItems } from "@/app/context/ItemsProvider";
 
 type ClaimRequestFormProps = {
@@ -62,6 +63,14 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
           Keep this reference number for your records. Staff will verify your Student ID
           and description before approving.
         </p>
+        {studentId.trim() ? (
+          <Link
+            href={`/my-claims?studentId=${encodeURIComponent(studentId.trim())}`}
+            className="mt-5 inline-flex items-center justify-center rounded-xl border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-text-primary)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+          >
+            Check claim status
+          </Link>
+        ) : null}
       </div>
     );
   }

@@ -8,7 +8,7 @@ import { useItems } from "@/app/context/ItemsProvider";
 const ADMIN_ID = "admin-001";
 
 export function AdminItemForm() {
-  const { items, claims, logItem, approveClaim, rejectClaim, releaseItem } =
+  const { items, claims, loading, logItem, approveClaim, rejectClaim, releaseItem } =
     useItems();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -23,7 +23,15 @@ export function AdminItemForm() {
     type: "success" | "warning" | "error";
     text: string;
   } | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    type: "success" | "warning" | "error";
+    text: string;
+  } | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [claimAction, setClaimAction] = useState<
+    Record<string, "approving" | "rejecting" | null>
+  >({});
+  const [releaseAction, setReleaseAction] = useState<Record<string, boolean>>({});
 
   const getPhotoUrl = (input: string) => {
     if (!input) return undefined;
@@ -114,39 +122,66 @@ export function AdminItemForm() {
   };
 
   const handleApprove = async (claimId: string) => {
+    setMessage(null);
+    setActionMessage(null);
+    setClaimAction((prev) => ({ ...prev, [claimId]: "approving" }));
     try {
       await approveClaim(claimId, ADMIN_ID, reviewNotes[claimId]);
+      setActionMessage({
+        type: "success",
+        text: "Claim approved. On-chain anchor submitted.",
+      });
     } catch (error) {
       console.error("Failed to approve claim:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to approve claim.",
-      );
+      const text = error instanceof Error ? error.message : "Failed to approve claim.";
+      setActionMessage({ type: "error", text });
+      alert(text);
+    } finally {
+      setClaimAction((prev) => ({ ...prev, [claimId]: null }));
     }
   };
 
   const handleReject = async (claimId: string) => {
+    setMessage(null);
+    setActionMessage(null);
+    setClaimAction((prev) => ({ ...prev, [claimId]: "rejecting" }));
     try {
       await rejectClaim(
         claimId,
         ADMIN_ID,
         reviewNotes[claimId] ?? "Rejected by admin.",
       );
+      setActionMessage({
+        type: "success",
+        text: "Claim rejected.",
+      });
     } catch (error) {
       console.error("Failed to reject claim:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to reject claim.",
-      );
+      const text = error instanceof Error ? error.message : "Failed to reject claim.";
+      setActionMessage({ type: "error", text });
+      alert(text);
+    } finally {
+      setClaimAction((prev) => ({ ...prev, [claimId]: null }));
     }
   };
 
   const handleRelease = async (itemId: string) => {
+    setMessage(null);
+    setActionMessage(null);
+    setReleaseAction((prev) => ({ ...prev, [itemId]: true }));
     try {
       await releaseItem(itemId, ADMIN_ID);
+      setActionMessage({
+        type: "success",
+        text: "Item marked as released.",
+      });
     } catch (error) {
       console.error("Failed to release item:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to release item.",
-      );
+      const text = error instanceof Error ? error.message : "Failed to release item.";
+      setActionMessage({ type: "error", text });
+      alert(text);
+    } finally {
+      setReleaseAction((prev) => ({ ...prev, [itemId]: false }));
     }
   };
 
@@ -350,6 +385,26 @@ export function AdminItemForm() {
           Claim Queue
         </h3>
 
+        {actionMessage ? (
+          <div
+            className={`rounded-xl border p-4 text-sm ${
+              actionMessage.type === "success"
+                ? "bg-green-500/10 text-green-400 border-green-500/20"
+                : actionMessage.type === "warning"
+                  ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                  : "bg-red-500/10 text-red-400 border-red-500/20"
+            }`}
+          >
+            {actionMessage.text}
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-soft)]">
+            Loading latest claims...
+          </div>
+        ) : null}
+
         {claimQueue.length === 0 ? (
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-soft)]">
             No claim requests yet. New claims will appear here for review.
@@ -359,6 +414,13 @@ export function AdminItemForm() {
         {claimQueue.map(([itemId, itemClaims]) => {
           const item = itemsById.get(itemId);
           if (!item) return null;
+          const hasActiveClaim = itemClaims.some(
+            (claim) => claim.status === "pending" || claim.status === "approved",
+          );
+          const displayStatus =
+            item.status === "available" && hasActiveClaim ? "under_review" : item.status;
+          const itemForCard =
+            displayStatus === item.status ? item : { ...item, status: displayStatus };
           const approvedClaim = itemClaims.find((claim) => claim.status === "approved");
 
           return (
@@ -368,7 +430,7 @@ export function AdminItemForm() {
             >
               <div className="grid gap-6 lg:grid-cols-[1.2fr_2fr]">
                 <div className="pointer-events-none">
-                  <ItemCard item={item} />
+                  <ItemCard item={itemForCard} />
                 </div>
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -381,7 +443,7 @@ export function AdminItemForm() {
                       </p>
                     </div>
                     <span className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs uppercase tracking-wider text-[var(--color-text-soft)]">
-                      {item.status.replace("_", " ")}
+                      {displayStatus.replace("_", " ")}
                     </span>
                   </div>
 
@@ -454,16 +516,22 @@ export function AdminItemForm() {
                               <button
                                 type="button"
                                 onClick={() => handleApprove(claim.claimId)}
-                                className="rounded-lg bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/30"
+                                disabled={claimAction[claim.claimId] != null}
+                                className="rounded-lg bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                Approve
+                                {claimAction[claim.claimId] === "approving"
+                                  ? "Approving..."
+                                  : "Approve"}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleReject(claim.claimId)}
-                                className="rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/30"
+                                disabled={claimAction[claim.claimId] != null}
+                                className="rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                Reject
+                                {claimAction[claim.claimId] === "rejecting"
+                                  ? "Rejecting..."
+                                  : "Reject"}
                               </button>
                             </div>
                           </div>
@@ -484,12 +552,16 @@ export function AdminItemForm() {
                       <button
                         type="button"
                         onClick={() => handleRelease(item.id)}
-                        disabled={item.custodyStatus === "released"}
-                        className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                        disabled={
+                          item.custodyStatus === "released" || releaseAction[item.id]
+                        }
+                        className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {item.custodyStatus === "released"
                           ? "Item Released"
-                          : "Release Item"}
+                          : releaseAction[item.id]
+                            ? "Releasing..."
+                            : "Release Item"}
                       </button>
                     ) : (
                       <span className="text-xs text-[var(--color-text-soft)]">

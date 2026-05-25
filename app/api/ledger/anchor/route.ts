@@ -108,18 +108,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const utxosRaw = await wallet.getUtxosMesh();
-    const utxos = (utxosRaw || []).filter(Boolean);
-    if (utxos.length === 0) {
-      return Response.json(
-        {
-          error:
-            "Admin wallet has no UTXOs. Fund the wallet before anchoring on-chain.",
-        },
-        { status: 400 },
-      );
-    }
-
     const metadata: Record<string, string> = {
       app: "verifind",
       event: String(body.event),
@@ -131,29 +119,57 @@ export async function POST(request: NextRequest) {
       metadata.claimId = String(body.claimId);
     }
 
-    const tx = new Transaction({
-      initiator: wallet as any,
-      fetcher: provider,
-      submitter: provider,
-      evaluator: provider,
-      verbose: false,
-    })
-      .sendLovelace(changeAddress, "2000000")
-      .setMetadata(METADATA_LABEL, metadata);
-    tx.setChangeAddress(changeAddress);
-    tx.txBuilder.selectUtxosFrom(utxos);
+    const buildAndSubmit = async () => {
+      const utxosRaw = await wallet.getUtxosMesh();
+      const utxos = (utxosRaw || []).filter(Boolean);
+      if (utxos.length === 0) {
+        throw new Error(
+          "Admin wallet has no UTXOs. Fund the wallet before anchoring on-chain.",
+        );
+      }
 
-    const unsignedTx = await tx.build();
-    const signedTx = await wallet.signTxReturnFullTx(unsignedTx);
-    const txHash = await provider.submitTx(signedTx);
+      const tx = new Transaction({
+        initiator: wallet as any,
+        fetcher: provider,
+        submitter: provider,
+        evaluator: provider,
+        verbose: false,
+      })
+        .sendLovelace(changeAddress, "2000000")
+        .setMetadata(METADATA_LABEL, metadata);
+      tx.setChangeAddress(changeAddress);
+      tx.txBuilder.selectUtxosFrom(utxos);
+
+      const unsignedTx = await tx.build();
+      const signedTx = await wallet.signTxReturnFullTx(unsignedTx);
+      return provider.submitTx(signedTx);
+    };
+
+    let txHash: string;
+    try {
+      txHash = await buildAndSubmit();
+    } catch (submitError: any) {
+      const message = submitError?.message ?? submitError?.toString?.() ?? "";
+      if (message.includes("All inputs are spent")) {
+        txHash = await buildAndSubmit();
+      } else {
+        throw submitError;
+      }
+    }
 
     return Response.json({ txHash });
   } catch (error: any) {
     console.error("Anchoring error:", error);
+    const responseMessage =
+      typeof error?.data?.message === "string"
+        ? error.data.message
+        : typeof error?.message === "string"
+          ? error.message
+          : "An unexpected error occurred during anchoring.";
     return Response.json(
       {
-        error: error.message || "An unexpected error occurred during anchoring.",
-        details: error.toString(),
+        error: responseMessage,
+        details: typeof error?.toString === "function" ? error.toString() : String(error),
       },
       { status: 500 },
     );

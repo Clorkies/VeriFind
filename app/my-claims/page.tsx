@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { NavBar } from "@/app/components/NavBar";
 import { Footer } from "@/app/components/Footer";
 import { useItems } from "@/app/context/ItemsProvider";
+import { useSearchParams } from "next/navigation";
 
 const STATUS_STYLES = {
   pending: "border-amber-400/40 bg-amber-400/10 text-amber-200",
@@ -11,9 +12,18 @@ const STATUS_STYLES = {
   rejected: "border-rose-400/40 bg-rose-400/10 text-rose-300",
 } as const;
 
-export default function MyClaimsPage() {
+function MyClaimsContent() {
   const { claims, items } = useItems();
   const [studentId, setStudentId] = useState("");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (studentId.trim()) return;
+    const fromQuery = searchParams.get("studentId");
+    if (fromQuery) {
+      setStudentId(fromQuery);
+    }
+  }, [searchParams, studentId]);
 
   const filtered = useMemo(() => {
     const target = studentId.trim().toLowerCase();
@@ -122,5 +132,19 @@ export default function MyClaimsPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function MyClaimsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-accent)] border-t-transparent" />
+        </div>
+      }
+    >
+      <MyClaimsContent />
+    </Suspense>
   );
 }

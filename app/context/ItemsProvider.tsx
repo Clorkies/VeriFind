@@ -239,57 +239,88 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
   const submitClaim: ItemsContextType["submitClaim"] = async (claim) => {
     const release = guardAction(
-    `claim:${claim.itemId}:${claim.studentId}`,
-    8000,
+      `claim:${claim.itemId}:${claim.studentId}`,
+      8000,
     );
     try {
-    const { data: existingClaims, error: existingError } = await supabase
-      .from("claims")
-      .select("id, submitted_at, status")
-      .eq("item_id", claim.itemId)
-      .eq("student_id", claim.studentId)
-      .in("status", ["pending", "approved"])
-      .order("submitted_at", { ascending: false })
-      .limit(1);
+      const { data: existingClaims, error: existingError } = await supabase
+        .from("claims")
+        .select("id, submitted_at, status")
+        .eq("item_id", claim.itemId)
+        .eq("student_id", claim.studentId)
+        .in("status", ["pending", "approved"])
+        .order("submitted_at", { ascending: false })
+        .limit(1);
 
-    if (existingError) throw existingError;
+      if (existingError) throw existingError;
 
-    if (existingClaims && existingClaims.length > 0) {
-      throw new Error("A claim is already pending or approved for this item.");
-    }
+      if (existingClaims && existingClaims.length > 0) {
+        throw new Error("A claim is already pending or approved for this item.");
+      }
 
-    const { data: newClaim, error: claimError } = await supabase
-      .from("claims")
-      .insert({
+      const { data: newClaim, error: claimError } = await supabase
+        .from("claims")
+        .insert({
+          item_id: claim.itemId,
+          student_id: claim.studentId,
+          student_name: claim.studentName,
+          contact_info: claim.contactInfo,
+          proof_description: claim.proofDescription,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      if (claimError) throw claimError;
+
+      const { error: updateError } = await supabase
+        .from("items")
+        .update({ status: "under_review" })
+        .eq("id", claim.itemId);
+
+      if (updateError) throw updateError;
+
+      const { error: auditError } = await supabase.from("audit_logs").insert({
         item_id: claim.itemId,
-        student_id: claim.studentId,
-        student_name: claim.studentName,
-        contact_info: claim.contactInfo,
-        proof_description: claim.proofDescription,
-        status: "pending",
-      })
-      .select()
-      .single();
+        action: "claimed",
+        actor: claim.studentId,
+        notes: "Claim request submitted.",
+      });
 
-    if (claimError) throw claimError;
+      if (auditError) {
+        console.error("Audit log failed:", auditError);
+      }
 
-    // Update item status
-    await supabase
-      .from("items")
-      .update({ status: "under_review" })
-      .eq("id", claim.itemId);
+      const mappedClaim: ClaimRequest = {
+        claimId: newClaim.id,
+        itemId: newClaim.item_id,
+        studentId: newClaim.student_id,
+        studentName: newClaim.student_name,
+        contactInfo: newClaim.contact_info,
+        proofDescription: newClaim.proof_description,
+        status: newClaim.status as ClaimRequest["status"],
+        submittedAt: newClaim.submitted_at,
+        reviewedBy: newClaim.reviewed_by ?? undefined,
+        reviewedAt: newClaim.reviewed_at ?? undefined,
+        reviewNotes: newClaim.review_notes ?? undefined,
+      };
 
-    // Add audit log
-    await supabase.from("audit_logs").insert({
-      item_id: claim.itemId,
-      action: "claimed",
-      actor: claim.studentId,
-      notes: "Claim request submitted.",
-    });
+      setClaims((prev) =>
+        prev.some((entry) => entry.claimId === mappedClaim.claimId)
+          ? prev
+          : [mappedClaim, ...prev],
+      );
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === claim.itemId && item.status === "available"
+            ? { ...item, status: "under_review" }
+            : item,
+        ),
+      );
 
-    return newClaim.id;
+      return newClaim.id;
     } finally {
-    release();
+      release();
     }
   };
 
@@ -310,7 +341,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
       const reviewedAt = new Date().toISOString();
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("claims")
         .update({
           status: "approved",
@@ -320,12 +351,37 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         })
         .eq("id", claimId);
 
+      if (updateError) {
+        throw new Error(`Failed to approve claim: ${updateError.message}`);
+      }
+
       await supabase.from("audit_logs").insert({
         item_id: claim.item_id,
         action: "approved",
         actor: adminId,
         notes,
       });
+
+      setClaims((prev) =>
+        prev.map((entry) =>
+          entry.claimId === claimId
+            ? {
+                ...entry,
+                status: "approved",
+                reviewedBy: adminId,
+                reviewedAt,
+                reviewNotes: notes,
+              }
+            : entry,
+        ),
+      );
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === claim.item_id && item.status === "available"
+            ? { ...item, status: "under_review" }
+            : item,
+        ),
+      );
 
       const txHash = await anchorLedger({
         event: "claim.approved",
@@ -359,7 +415,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
       const reviewedAt = new Date().toISOString();
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("claims")
         .update({
           status: "rejected",
@@ -368,6 +424,8 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
           review_notes: notes,
         })
         .eq("id", claimId);
+
+      if (updateError) throw new Error(`Failed to reject claim: ${updateError.message}`);
 
       // Check if there are other active claims
       const { data: otherClaims } = await supabase
@@ -379,10 +437,14 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
       const hasActiveClaim = (otherClaims?.length || 0) > 0;
 
-      await supabase
+      const { error: itemUpdateError } = await supabase
         .from("items")
         .update({ status: hasActiveClaim ? "under_review" : "available" })
         .eq("id", claim.item_id);
+
+      if (itemUpdateError) {
+        throw new Error(`Failed to update item status: ${itemUpdateError.message}`);
+      }
 
       await supabase.from("audit_logs").insert({
         item_id: claim.item_id,
@@ -390,6 +452,27 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         actor: adminId,
         notes,
       });
+
+      setClaims((prev) =>
+        prev.map((entry) =>
+          entry.claimId === claimId
+            ? {
+                ...entry,
+                status: "rejected",
+                reviewedBy: adminId,
+                reviewedAt,
+                reviewNotes: notes,
+              }
+            : entry,
+        ),
+      );
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === claim.item_id
+            ? { ...item, status: hasActiveClaim ? "under_review" : "available" }
+            : item,
+        ),
+      );
     } finally {
       release();
     }
@@ -398,7 +481,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const releaseItem: ItemsContextType["releaseItem"] = async (itemId, adminId) => {
     const release = guardAction(`release:${itemId}`, 5000);
     try {
-      await supabase
+      const { error: releaseError } = await supabase
         .from("items")
         .update({
           status: "returned",
@@ -406,12 +489,24 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         })
         .eq("id", itemId);
 
+      if (releaseError) {
+        throw new Error(`Failed to release item: ${releaseError.message}`);
+      }
+
       await supabase.from("audit_logs").insert({
         item_id: itemId,
         action: "released",
         actor: adminId,
         notes: "Item released to verified student.",
       });
+
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId
+            ? { ...item, status: "returned", custodyStatus: "released" }
+            : item,
+        ),
+      );
 
       const txHash = await anchorLedger({
         event: "item.returned",
