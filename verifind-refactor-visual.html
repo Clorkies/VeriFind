@@ -631,7 +631,7 @@
           </div>
           <div class="flow-step">
             <div class="step-num">A.2</div>
-            <div class="step-text">Admin photographs item and logs it into VeriFind registry</div>
+            <div class="step-text">Admin photographs item and logs it with a <strong>Private Staff Secret</strong></div>
           </div>
           <div class="flow-step">
             <div class="step-num">A.3</div>
@@ -929,35 +929,40 @@
     </div>
   </div>
 
-  <!-- ⑧ ROADMAP -->
+  <!-- ⑧ AUDIT -->
   <div class="section">
     <div class="section-label">Section 08</div>
-    <div class="section-title">Refactor Roadmap</div>
+    <div class="section-title">Implementation Status Audit</div>
     <div class="roadmap-list">
-      <div class="roadmap-item phase-1">
-        <div class="phase-tag">Phase 1 — Immediate</div>
-        <h3 style="color: var(--red);">Delete Wallet/QR Infrastructure</h3>
-        <p>Remove WalletProvider, WalletConnect, OwnerQrCard, QrScanner, qrPayload.ts, verifyOwnership.ts. Update nav to remove wallet links. Update HowItWorks copy.</p>
-      </div>
-      <div class="roadmap-item phase-2">
-        <div class="phase-tag">Phase 2 — Immediate</div>
-        <h3 style="color: var(--amber);">Rewrite Claim Flow</h3>
-        <p>Build ClaimRequestForm on /claim/[id]. Inputs: Student ID, name, contact, proof description. Output: claim ticket with reference number. Remove VerifyOwnershipPanel.</p>
-      </div>
-      <div class="roadmap-item phase-3">
-        <div class="phase-tag">Phase 3 — Immediate</div>
-        <h3 style="color: var(--blue);">Update Data Model &amp; State</h3>
-        <p>Rewrite itemTypes.ts with new types. Update mockItemsData.ts. Refactor ItemsProvider to expose submitClaim, approveClaim, rejectClaim, releaseItem.</p>
-      </div>
-      <div class="roadmap-item phase-4">
-        <div class="phase-tag">Phase 4 — High Priority</div>
-        <h3 style="color: var(--teal);">Admin Claim Queue &amp; /my-claims Page</h3>
-        <p>Expand AdminItemForm with claim queue, approval/rejection UI, custody status, and release action. Add new /my-claims route for student status lookup.</p>
+      <div class="roadmap-item phase-5">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--green);">Institutional Verification</h3>
+        <p>Replaced anonymous wallet addresses with Student IDs. Added a "Staff Secret" (hidden description) field to all items to prevent fraudulent claims by cross-referencing student proof.</p>
       </div>
       <div class="roadmap-item phase-5">
-        <div class="phase-tag">Phase 5 — Medium Priority</div>
-        <h3 style="color: var(--green);">Backend, Persistence &amp; On-Chain Logging</h3>
-        <p>Add API routes + database (Prisma + PostgreSQL). Re-integrate MeshJS for admin-side on-chain anchoring. Optional: email/SMS claim notifications.</p>
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--green);">Persistent Backend (Supabase)</h3>
+        <p>Successfully migrated all data to Supabase (PostgreSQL), replacing the initial mock JSON infrastructure. Enables long-term data durability and complex querying.</p>
+      </div>
+      <div class="roadmap-item phase-4">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--teal);">Real-time Synchronization</h3>
+        <p>The Lost Items Board and Admin Panel now update instantly across all clients using Supabase's real-time replication features — no manual refreshing required.</p>
+      </div>
+      <div class="roadmap-item phase-3">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--blue);">On-Chain Audit Trail</h3>
+        <p>Critical events (Item Logged, Claim Approved, Item Returned) are anchored to the Cardano Preview network via server-side signing using MeshJS and Blockfrost.</p>
+      </div>
+      <div class="roadmap-item phase-2">
+        <div class="phase-tag">Future — Minor Gap</div>
+        <h3 style="color: var(--amber);">Admin Authentication</h3>
+        <p>The /admin panel is currently open to any user with the URL. Integrating NextAuth with Supabase is the planned next step for enterprise-grade security.</p>
+      </div>
+      <div class="roadmap-item phase-1">
+        <div class="phase-tag">Future — Minor Gap</div>
+        <h3 style="color: var(--red);">Dedicated Photo Storage</h3>
+        <p>Current photo URLs are stored as strings. Integrating Supabase Storage will allow for direct drag-and-drop image uploads within the admin intake form.</p>
       </div>
     </div>
   </div>
