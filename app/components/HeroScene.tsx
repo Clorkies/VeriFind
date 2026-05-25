@@ -91,8 +91,8 @@ export function HeroScene() {
               Latest
             </p>
             <p className="mt-2 text-sm text-[var(--color-text-soft)]">
-              New entry posted for a missing wallet near the library. On-chain
-              receipt minted in 2.3s.
+              New entry posted for a backpack found near the library. Audit
+              trail anchored on-chain.
             </p>
           </div>
         </div>

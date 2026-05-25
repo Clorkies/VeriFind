@@ -25,9 +25,8 @@ export default function AdminPage() {
             className="animate-fade-up max-w-2xl text-sm text-[var(--color-text-soft)] sm:text-base"
             style={{ animationDelay: "0.15s" }}
           >
-            Authorized personnel only. Use this interface to manually add items to the 
-            VeriFind board. In a production environment, this would require multi-sig 
-            authorization.
+            Authorized personnel only. Log items, review claims, and release verified
+            items to students. On-chain logging is triggered from approved actions.
           </p>
         </header>
 

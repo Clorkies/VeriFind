@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { WalletConnect } from "./WalletConnect";
 
 function ChainGlyph({ className }: { className?: string }) {
   return (
@@ -65,12 +64,11 @@ export function NavBar() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          <NavLink href="/board">Browse</NavLink>
-          <NavLink href="/wallet">My QR</NavLink>
+          <NavLink href="/board">Board</NavLink>
+          <NavLink href="/my-claims">My Claims</NavLink>
+          <NavLink href="/admin">Admin</NavLink>
           <NavLink href="/#how-it-works">How it works</NavLink>
         </nav>
-
-        <WalletConnect />
       </div>
     </header>
   );

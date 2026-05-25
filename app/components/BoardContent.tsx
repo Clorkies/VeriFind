@@ -30,22 +30,25 @@ type BoardContentProps = {
 export function BoardContent({ showSkeleton }: BoardContentProps) {
   const { items } = useItems();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<FilterId>("all");
+  const [filter, setFilter] = useState<FilterId>("open");
 
   const filtered = useMemo(() => {
     let list = items;
-    if (filter === "resolved") {
-      list = list.filter((i) => i.status === "resolved");
+    if (filter === "open") {
+      list = list.filter(
+        (i) => i.status === "available" || i.status === "under_review",
+      );
     } else if (filter !== "all") {
-      list = list.filter((i) => i.category === filter);
+      list = list.filter((i) => i.status === filter);
     }
     const s = query.trim().toLowerCase();
     if (s) {
       list = list.filter(
         (i) =>
           i.name.toLowerCase().includes(s) ||
-          i.location.toLowerCase().includes(s) ||
-          i.txHash.toLowerCase().includes(s),
+          i.locationFound.toLowerCase().includes(s) ||
+          i.description.toLowerCase().includes(s) ||
+          (i.txHash ? i.txHash.toLowerCase().includes(s) : false),
       );
     }
     return list;
@@ -58,21 +61,21 @@ export function BoardContent({ showSkeleton }: BoardContentProps) {
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_86%,transparent)] px-3 py-1.5">
           <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />
           <span className="text-xs font-medium tracking-wide text-[var(--color-text-soft)]">
-            The Ledger · {items.length} entries
+            Campus Registry · {items.length} entries
           </span>
         </div>
         <h1
           className="animate-fade-up text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl"
           style={{ animationDelay: "0.05s" }}
         >
-          Bulletin <span className="text-[var(--color-accent)]">Board</span>
+          Lost & Found <span className="text-[var(--color-accent)]">Board</span>
         </h1>
         <p
           className="animate-fade-up max-w-2xl text-sm text-[var(--color-text-soft)] sm:text-base"
           style={{ animationDelay: "0.15s" }}
         >
-          Every lost or found item, recorded on-chain. Owners tag belongings with
-          a personal QR sticker—scan to verify, no signature required.
+          Browse items logged by the Lost & Found office. Submit a claim with your
+          Student ID and a description for staff verification.
         </p>
       </header>
 
@@ -105,13 +108,13 @@ export function BoardContent({ showSkeleton }: BoardContentProps) {
             <span className="text-2xl text-[var(--color-text-soft)]">∅</span>
           </div>
           <p className="text-[var(--color-text-soft)]">
-            No entries match this slice of the ledger.
+            No entries match this filter yet.
           </p>
           <button
             type="button"
             onClick={() => {
               setQuery("");
-              setFilter("all");
+              setFilter("open");
             }}
             className="mt-1 text-sm text-[var(--color-accent)] underline-offset-4 transition hover:underline"
           >
