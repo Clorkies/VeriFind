@@ -1,7 +1,22 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import type { AuditEntry, ClaimRequest, FoundItem, ItemStatus } from "@/lib/itemTypes";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import type {
+  AuditEntry,
+  ClaimRequest,
+  FoundItem,
+  ItemCategory,
+  ItemStatus,
+} from "@/lib/itemTypes";
 import { createClient } from "@/lib/supabase/client";
 
 type ItemsContextType = {
@@ -19,7 +34,7 @@ type ItemsContextType = {
       FoundItem,
       "id" | "loggedAt" | "auditLog" | "status"
     >
-  ) => Promise<void>;
+  ) => Promise<{ itemId: string; txHash?: string; anchorError?: string }>;
 };
 
 const ItemsContext = createContext<ItemsContextType | undefined>(undefined);
@@ -28,9 +43,52 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<FoundItem[]>([]);
   const [claims, setClaims] = useState<ClaimRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const inFlight = useRef(new Set<string>());
+  const lastActionAt = useRef(new Map<string, number>());
 
-  const fetchData = async () => {
+  const guardAction = (key: string, cooldownMs: number) => {
+    const now = Date.now();
+    if (inFlight.current.has(key)) {
+      throw new Error("Request already in progress.");
+    }
+    const last = lastActionAt.current.get(key) ?? 0;
+    const remaining = cooldownMs - (now - last);
+    if (remaining > 0) {
+      throw new Error(
+        `Please wait ${Math.ceil(remaining / 1000)}s before trying again.`,
+      );
+    }
+    inFlight.current.add(key);
+    lastActionAt.current.set(key, now);
+    return () => inFlight.current.delete(key);
+  };
+
+  const anchorLedger = async (payload: {
+    event: "item.logged" | "claim.approved" | "item.returned";
+    itemId: string;
+    claimId?: string;
+    adminId: string;
+  }) => {
+    const response = await fetch("/api/ledger/anchor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    let data: { txHash?: string; error?: string } | null = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+    if (!response.ok || !data?.txHash) {
+      const message = data?.error ?? "Failed to anchor on-chain.";
+      throw new Error(message);
+    }
+    return data.txHash;
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch items
@@ -62,7 +120,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         name: item.name,
         description: item.description,
         hiddenDescription: item.hidden_description,
-        category: item.category as any,
+        category: item.category as ItemCategory,
         locationFound: item.location_found,
         dateFound: item.date_found,
         photoUrl: item.photo_url,
@@ -75,7 +133,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
           .filter((log) => log.item_id === item.id)
           .map((log) => ({
             timestamp: log.timestamp,
-            action: log.action as any,
+            action: log.action as AuditEntry["action"],
             actor: log.actor,
             notes: log.notes,
           })),
@@ -89,7 +147,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         studentName: claim.student_name,
         contactInfo: claim.contact_info,
         proofDescription: claim.proof_description,
-        status: claim.status as any,
+        status: claim.status as ClaimRequest["status"],
         submittedAt: claim.submitted_at,
         reviewedBy: claim.reviewed_by,
         reviewedAt: claim.reviewed_at,
@@ -101,10 +159,12 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
 
     // Subscribe to changes
     const channel = supabase
@@ -119,42 +179,85 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => {
+      clearTimeout(timer);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchData, supabase]);
 
   const logItem: ItemsContextType["logItem"] = async (item) => {
-    const status: ItemStatus =
-      item.custodyStatus === "released" ? "returned" : "available";
-    
-    const { data: newItem, error: itemError } = await supabase
-      .from("items")
-      .insert({
-        name: item.name,
-        description: item.description,
-        hidden_description: item.hiddenDescription,
-        category: item.category,
-        location_found: item.locationFound,
-        date_found: item.dateFound,
-        photo_url: item.photoUrl,
-        status,
-        custody_status: item.custodyStatus,
-        logged_by: item.loggedBy,
-      })
-      .select()
-      .single();
+    const release = guardAction("log-item", 5000);
+    try {
+      const status: ItemStatus =
+        item.custodyStatus === "released" ? "returned" : "available";
 
-    if (itemError) throw itemError;
+      const { data: newItem, error: itemError } = await supabase
+        .from("items")
+        .insert({
+          name: item.name,
+          description: item.description,
+          hidden_description: item.hiddenDescription,
+          category: item.category,
+          location_found: item.locationFound,
+          date_found: item.dateFound,
+          photo_url: item.photoUrl,
+          status,
+          custody_status: item.custodyStatus,
+          logged_by: item.loggedBy,
+        })
+        .select()
+        .single();
 
-    await supabase.from("audit_logs").insert({
-      item_id: newItem.id,
-      action: "logged",
-      actor: item.loggedBy,
-      notes: "Item logged by Lost & Found staff.",
-    });
+      if (itemError) throw itemError;
+
+      await supabase.from("audit_logs").insert({
+        item_id: newItem.id,
+        action: "logged",
+        actor: item.loggedBy,
+        notes: "Item logged by Lost & Found staff.",
+      });
+
+      try {
+        const txHash = await anchorLedger({
+          event: "item.logged",
+          itemId: newItem.id,
+          adminId: item.loggedBy,
+        });
+        await supabase
+          .from("items")
+          .update({ tx_hash: txHash })
+          .eq("id", newItem.id);
+        return { itemId: newItem.id, txHash };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "On-chain anchor failed.";
+        return { itemId: newItem.id, anchorError: message };
+      }
+    } finally {
+      release();
+    }
   };
 
   const submitClaim: ItemsContextType["submitClaim"] = async (claim) => {
+    const release = guardAction(
+    `claim:${claim.itemId}:${claim.studentId}`,
+    8000,
+    );
+    try {
+    const { data: existingClaims, error: existingError } = await supabase
+      .from("claims")
+      .select("id, submitted_at, status")
+      .eq("item_id", claim.itemId)
+      .eq("student_id", claim.studentId)
+      .in("status", ["pending", "approved"])
+      .order("submitted_at", { ascending: false })
+      .limit(1);
+
+    if (existingError) throw existingError;
+
+    if (existingClaims && existingClaims.length > 0) {
+      throw new Error("A claim is already pending or approved for this item.");
+    }
+
     const { data: newClaim, error: claimError } = await supabase
       .from("claims")
       .insert({
@@ -185,6 +288,9 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     });
 
     return newClaim.id;
+    } finally {
+    release();
+    }
   };
 
   const approveClaim: ItemsContextType["approveClaim"] = async (
@@ -192,32 +298,48 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     adminId,
     notes,
   ) => {
-    const { data: claim, error: fetchError } = await supabase
-      .from("claims")
-      .select("item_id")
-      .eq("id", claimId)
-      .single();
+    const release = guardAction(`approve:${claimId}`, 3000);
+    try {
+      const { data: claim, error: fetchError } = await supabase
+        .from("claims")
+        .select("item_id")
+        .eq("id", claimId)
+        .single();
 
-    if (fetchError) throw fetchError;
+      if (fetchError) throw fetchError;
 
-    const reviewedAt = new Date().toISOString();
+      const reviewedAt = new Date().toISOString();
 
-    await supabase
-      .from("claims")
-      .update({
-        status: "approved",
-        reviewed_by: adminId,
-        reviewed_at: reviewedAt,
-        review_notes: notes,
-      })
-      .eq("id", claimId);
+      await supabase
+        .from("claims")
+        .update({
+          status: "approved",
+          reviewed_by: adminId,
+          reviewed_at: reviewedAt,
+          review_notes: notes,
+        })
+        .eq("id", claimId);
 
-    await supabase.from("audit_logs").insert({
-      item_id: claim.item_id,
-      action: "approved",
-      actor: adminId,
-      notes,
-    });
+      await supabase.from("audit_logs").insert({
+        item_id: claim.item_id,
+        action: "approved",
+        actor: adminId,
+        notes,
+      });
+
+      const txHash = await anchorLedger({
+        event: "claim.approved",
+        itemId: claim.item_id,
+        claimId,
+        adminId,
+      });
+      await supabase
+        .from("items")
+        .update({ tx_hash: txHash })
+        .eq("id", claim.item_id);
+    } finally {
+      release();
+    }
   };
 
   const rejectClaim: ItemsContextType["rejectClaim"] = async (
@@ -225,64 +347,81 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     adminId,
     notes,
   ) => {
-    const { data: claim, error: fetchError } = await supabase
-      .from("claims")
-      .select("item_id")
-      .eq("id", claimId)
-      .single();
+    const release = guardAction(`reject:${claimId}`, 3000);
+    try {
+      const { data: claim, error: fetchError } = await supabase
+        .from("claims")
+        .select("item_id")
+        .eq("id", claimId)
+        .single();
 
-    if (fetchError) throw fetchError;
+      if (fetchError) throw fetchError;
 
-    const reviewedAt = new Date().toISOString();
+      const reviewedAt = new Date().toISOString();
 
-    await supabase
-      .from("claims")
-      .update({
-        status: "rejected",
-        reviewed_by: adminId,
-        reviewed_at: reviewedAt,
-        review_notes: notes,
-      })
-      .eq("id", claimId);
+      await supabase
+        .from("claims")
+        .update({
+          status: "rejected",
+          reviewed_by: adminId,
+          reviewed_at: reviewedAt,
+          review_notes: notes,
+        })
+        .eq("id", claimId);
 
-    // Check if there are other active claims
-    const { data: otherClaims } = await supabase
-      .from("claims")
-      .select("id")
-      .eq("item_id", claim.item_id)
-      .neq("id", claimId)
-      .in("status", ["pending", "approved"]);
+      // Check if there are other active claims
+      const { data: otherClaims } = await supabase
+        .from("claims")
+        .select("id")
+        .eq("item_id", claim.item_id)
+        .neq("id", claimId)
+        .in("status", ["pending", "approved"]);
 
-    const hasActiveClaim = (otherClaims?.length || 0) > 0;
+      const hasActiveClaim = (otherClaims?.length || 0) > 0;
 
-    await supabase
-      .from("items")
-      .update({ status: hasActiveClaim ? "under_review" : "available" })
-      .eq("id", claim.item_id);
+      await supabase
+        .from("items")
+        .update({ status: hasActiveClaim ? "under_review" : "available" })
+        .eq("id", claim.item_id);
 
-    await supabase.from("audit_logs").insert({
-      item_id: claim.item_id,
-      action: "rejected",
-      actor: adminId,
-      notes,
-    });
+      await supabase.from("audit_logs").insert({
+        item_id: claim.item_id,
+        action: "rejected",
+        actor: adminId,
+        notes,
+      });
+    } finally {
+      release();
+    }
   };
 
   const releaseItem: ItemsContextType["releaseItem"] = async (itemId, adminId) => {
-    await supabase
-      .from("items")
-      .update({
-        status: "returned",
-        custody_status: "released",
-      })
-      .eq("id", itemId);
+    const release = guardAction(`release:${itemId}`, 5000);
+    try {
+      await supabase
+        .from("items")
+        .update({
+          status: "returned",
+          custody_status: "released",
+        })
+        .eq("id", itemId);
 
-    await supabase.from("audit_logs").insert({
-      item_id: itemId,
-      action: "released",
-      actor: adminId,
-      notes: "Item released to verified student.",
-    });
+      await supabase.from("audit_logs").insert({
+        item_id: itemId,
+        action: "released",
+        actor: adminId,
+        notes: "Item released to verified student.",
+      });
+
+      const txHash = await anchorLedger({
+        event: "item.returned",
+        itemId,
+        adminId,
+      });
+      await supabase.from("items").update({ tx_hash: txHash }).eq("id", itemId);
+    } finally {
+      release();
+    }
   };
 
   return (

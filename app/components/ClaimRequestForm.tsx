@@ -16,9 +16,11 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
   const [proofDescription, setProofDescription] = useState("");
   const [claimId, setClaimId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setError(null);
     setIsSubmitting(true);
     try {
       const reference = await submitClaim({
@@ -31,7 +33,9 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
       setClaimId(reference);
     } catch (error) {
       console.error("Failed to submit claim:", error);
-      alert("Something went wrong. Please try again.");
+      setError(
+        error instanceof Error ? error.message : "Something went wrong. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -146,6 +150,11 @@ export function ClaimRequestForm({ itemId, itemName }: ClaimRequestFormProps) {
       >
         {isSubmitting ? "Submitting..." : "Submit Claim Request"}
       </button>
+      {error ? (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">
+          {error}
+        </div>
+      ) : null}
     </form>
   );
 }

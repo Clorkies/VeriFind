@@ -168,7 +168,12 @@ Create `.env.local` at the repo root:
 
 ```bash
 NEXT_PUBLIC_BLOCKFROST_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+BLOCKFROST_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+CARDANO_ADMIN_MNEMONIC="word1 word2 ... word24"
+CARDANO_NETWORK=preprod
 ```
+
+`CARDANO_ADMIN_MNEMONIC` is the school-controlled wallet used for admin-side on-chain audit anchoring. No student wallet is required.
 
 ---
 

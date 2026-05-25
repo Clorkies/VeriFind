@@ -19,9 +19,10 @@ export function AdminItemForm() {
   const [photoInput, setPhotoInput] = useState("");
   const [custodyStatus, setCustodyStatus] = useState<"held" | "released">("held");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: "success" | "warning" | "error";
+    text: string;
+  } | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   const getPhotoUrl = (input: string) => {
@@ -66,7 +67,7 @@ export function AdminItemForm() {
     setMessage(null);
 
     try {
-      await logItem({
+      const result = await logItem({
         name: name.trim(),
         description: description.trim(),
         hiddenDescription: hiddenDescription.trim(),
@@ -78,10 +79,22 @@ export function AdminItemForm() {
         custodyStatus,
       });
 
-      setMessage({
-        type: "success",
-        text: `Logged "${name}" in the registry.`,
-      });
+      if (result.anchorError) {
+        setMessage({
+          type: "warning",
+          text: `Logged "${name}" but on-chain anchoring failed: ${result.anchorError}`,
+        });
+      } else if (result.txHash) {
+        setMessage({
+          type: "success",
+          text: `Logged "${name}" with on-chain record ${result.txHash}.`,
+        });
+      } else {
+        setMessage({
+          type: "success",
+          text: `Logged "${name}" in the registry.`,
+        });
+      }
 
       setName("");
       setDescription("");
@@ -105,7 +118,9 @@ export function AdminItemForm() {
       await approveClaim(claimId, ADMIN_ID, reviewNotes[claimId]);
     } catch (error) {
       console.error("Failed to approve claim:", error);
-      alert("Failed to approve claim.");
+      alert(
+        error instanceof Error ? error.message : "Failed to approve claim.",
+      );
     }
   };
 
@@ -118,7 +133,9 @@ export function AdminItemForm() {
       );
     } catch (error) {
       console.error("Failed to reject claim:", error);
-      alert("Failed to reject claim.");
+      alert(
+        error instanceof Error ? error.message : "Failed to reject claim.",
+      );
     }
   };
 
@@ -127,7 +144,9 @@ export function AdminItemForm() {
       await releaseItem(itemId, ADMIN_ID);
     } catch (error) {
       console.error("Failed to release item:", error);
-      alert("Failed to release item.");
+      alert(
+        error instanceof Error ? error.message : "Failed to release item.",
+      );
     }
   };
 
@@ -294,7 +313,9 @@ export function AdminItemForm() {
                 className={`rounded-xl p-4 text-sm ${
                   message.type === "success"
                     ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                    : "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : message.type === "warning"
+                      ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                      : "bg-red-500/10 text-red-400 border border-red-500/20"
                 }`}
               >
                 {message.text}
