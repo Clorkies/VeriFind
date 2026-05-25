@@ -1,4 +1,4 @@
-import type { Item, ItemCategory, ItemStatus } from "./itemTypes";
+import type { FoundItem, ItemCategory, ItemStatus } from "./itemTypes";
 
 function pic(seed: string, w = 480, h = 320) {
   return `https://picsum.photos/seed/${seed}/${w}/${h}`;
@@ -17,13 +17,12 @@ type MockRow = {
   name: string;
   category: ItemCategory;
   location: string;
-  status: ItemStatus;
+  status: "found" | "claimed" | "resolved";
   /** picsum seed, or null for no image */
   picSeed: string | null;
   foundAt: string;
   /** If set, keeps stable demo tx (e.g. original 14). */
   txHash?: string;
-  ownerAddress?: string;
 };
 
 /**
@@ -40,7 +39,6 @@ const MOCK_ROWS: MockRow[] = [
     foundAt: "2026-04-22T14:30:00.000Z",
     txHash:
       "5b2c9a1f4e3d8c7b6a594837261504132f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c",
-    ownerAddress: "addr_test1vzfxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
   },
   {
     name: "TI-84 Calculator",
@@ -599,17 +597,59 @@ const MOCK_ROWS: MockRow[] = [
   },
 ];
 
-export const MOCK_ITEMS_DATA: Item[] = MOCK_ROWS.map((row, idx) => {
+export const MOCK_ITEMS_DATA: FoundItem[] = MOCK_ROWS.map((row, idx) => {
   const slot = idx + 1;
+  const status: ItemStatus =
+    row.status === "found"
+      ? "available"
+      : row.status === "claimed"
+        ? "under_review"
+        : "returned";
+  const loggedAt = new Date(row.foundAt).toISOString();
+  const custodyStatus = status === "returned" ? "released" : "held";
+  const baseAudit = [
+    {
+      timestamp: loggedAt,
+      action: "logged" as const,
+      actor: "admin-001",
+      notes: "Item logged by Lost & Found staff.",
+    },
+  ];
+  const auditLog =
+    status === "returned"
+      ? [
+          ...baseAudit,
+          {
+            timestamp: new Date(loggedAt).toISOString(),
+            action: "released" as const,
+            actor: "admin-001",
+            notes: "Item released to verified student.",
+          },
+        ]
+      : status === "under_review"
+        ? [
+            ...baseAudit,
+            {
+              timestamp: new Date(loggedAt).toISOString(),
+              action: "claimed" as const,
+              actor: "student-unknown",
+              notes: "Claim request submitted.",
+            },
+          ]
+        : baseAudit;
   return {
     id: String(slot),
     name: row.name,
+    description: `Reported as "${row.name}" found on campus.`,
     category: row.category,
-    location: row.location,
-    status: row.status,
-    imageUrl: row.picSeed ? pic(row.picSeed) : null,
+    locationFound: row.location,
+    dateFound: row.foundAt,
+    photoUrl: row.picSeed ? pic(row.picSeed) : undefined,
+    status,
+    custodyStatus,
+    loggedBy: "admin-001",
+    loggedAt,
+    auditLog,
     txHash: row.txHash ?? txForSlot(slot),
-    foundAt: row.foundAt,
-    ownerAddress: row.ownerAddress,
   };
 });
