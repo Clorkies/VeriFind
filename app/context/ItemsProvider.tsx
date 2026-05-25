@@ -114,30 +114,48 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const activeClaimItemIds = new Set(
+        (claimsData || [])
+          .filter((claim) => claim.status === "pending" || claim.status === "approved")
+          .map((claim) => claim.item_id),
+      );
+
       // Map Supabase items to FoundItem type
-      const mappedItems: FoundItem[] = (itemsData || []).map((item) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        hiddenDescription: item.hidden_description,
-        category: item.category as ItemCategory,
-        locationFound: item.location_found,
-        dateFound: item.date_found,
-        photoUrl: item.photo_url,
-        status: item.status as ItemStatus,
-        custodyStatus: item.custody_status as "held" | "released",
-        loggedBy: item.logged_by,
-        loggedAt: item.logged_at,
-        txHash: item.tx_hash,
-        auditLog: (auditData || [])
+      const mappedItems: FoundItem[] = (itemsData || []).map((item) => {
+        const baseStatus = item.status as ItemStatus;
+        const auditLog = (auditData || [])
           .filter((log) => log.item_id === item.id)
           .map((log) => ({
             timestamp: log.timestamp,
             action: log.action as AuditEntry["action"],
             actor: log.actor,
             notes: log.notes,
-          })),
-      }));
+          }));
+        const wasReleased =
+          item.custody_status === "released" ||
+          auditLog.some((log) => log.action === "released");
+        const status = wasReleased
+          ? "returned"
+          : baseStatus === "available" && activeClaimItemIds.has(item.id)
+            ? "under_review"
+            : baseStatus;
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          hiddenDescription: item.hidden_description,
+          category: item.category as ItemCategory,
+          locationFound: item.location_found,
+          dateFound: item.date_found,
+          photoUrl: item.photo_url,
+          status,
+          custodyStatus: item.custody_status as "held" | "released",
+          loggedBy: item.logged_by,
+          loggedAt: item.logged_at,
+          txHash: item.tx_hash,
+          auditLog,
+        };
+      });
 
       // Map Supabase claims to ClaimRequest type
       const mappedClaims: ClaimRequest[] = (claimsData || []).map((claim) => ({
@@ -155,7 +173,14 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
       }));
 
       setItems(mappedItems);
-      setClaims(mappedClaims);
+      setClaims((prev) => {
+        const merged = new Map<string, ClaimRequest>();
+        prev.forEach((claim) => merged.set(claim.claimId, claim));
+        mappedClaims.forEach((claim) => merged.set(claim.claimId, claim));
+        return Array.from(merged.values()).sort(
+          (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+        );
+      });
     } finally {
       setLoading(false);
     }

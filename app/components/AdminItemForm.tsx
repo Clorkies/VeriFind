@@ -57,6 +57,10 @@ export function AdminItemForm() {
     auditLog: [],
   };
 
+  const itemsById = useMemo(() => {
+    return new Map(items.map((item) => [item.id, item]));
+  }, [items]);
+
   const claimQueue = useMemo(() => {
     const byItem = new Map<string, ClaimRequest[]>();
     claims.forEach((claim) => {
@@ -64,12 +68,11 @@ export function AdminItemForm() {
       list.push(claim);
       byItem.set(claim.itemId, list);
     });
-    return Array.from(byItem.entries());
-  }, [claims]);
-
-  const itemsById = useMemo(() => {
-    return new Map(items.map((item) => [item.id, item]));
-  }, [items]);
+    return Array.from(byItem.entries()).filter(([itemId]) => {
+      const item = itemsById.get(itemId);
+      return item ? item.status !== "returned" : true;
+    });
+  }, [claims, itemsById]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
