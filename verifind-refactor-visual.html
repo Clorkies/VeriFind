@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VeriFind — Refactor Visual Aid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080b14;
+      --surface: #0e1320;
+      --surface-2: #141a2e;
+      --border: #1e2640;
+      --border-bright: #2e3a5c;
+      --text: #e8eaf4;
+      --muted: #7a82a0;
+      --dim: #3e4566;
+      --blue: #4f8aff;
+      --teal: #2de0c0;
+      --amber: #ffb740;
+      --red: #ff5e6a;
+      --green: #3de89a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Lora', Georgia, serif;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    /* ───── HERO ───── */
+    .hero {
+      position: relative;
+      padding: 80px 32px 64px;
+      text-align: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 30% -10%, rgba(79,138,255,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(45,224,192,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--teal);
+      border: 1px solid rgba(45,224,192,.3);
+      padding: 5px 14px;
+      border-radius: 4px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 18px;
+      max-width: 820px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero h1 span { color: var(--blue); }
+    .hero p {
+      max-width: 620px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 1rem;
+      font-style: italic;
+    }
+
+    /* ───── LAYOUT ───── */
+    main {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+    .section {
+      padding: 64px 0 0;
+    }
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      margin-bottom: 28px;
+      letter-spacing: -0.02em;
+    }
+
+    /* ───── COMPARISON ───── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .compare-col {
+      padding: 28px 26px;
+      background: var(--surface);
+    }
+    .compare-col.new {
+      background: var(--surface-2);
+    }
+    .compare-col h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-col.old h3 { color: var(--red); }
+    .compare-col.new h3 { color: var(--teal); }
+    .compare-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+    .compare-row .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+    .old .dot { background: var(--red); opacity: .6; }
+    .new .dot { background: var(--teal); }
+    .compare-row span { color: var(--muted); font-size: 0.9rem; }
+    .compare-row span strong { color: var(--text); }
+
+    /* ───── ACTORS ───── */
+    .actors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .actor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .actor-icon {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+    .actor-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--blue);
+    }
+    .actor-card p {
+      font-size: 0.87rem;
+      color: var(--muted);
+    }
+
+    /* ───── FLOW ───── */
+    .flow-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+    }
+    .flow-phase {
+      margin-bottom: 40px;
+    }
+    .flow-phase:last-child { margin-bottom: 0; }
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .phase-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .phase-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .phase-bar {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .phase-actor {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .flow-step {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 12px;
+      position: relative;
+    }
+    .flow-step::after {
+      content: '→';
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+    }
+    .flow-step:last-child::after { content: ''; }
+    .step-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--dim);
+      margin-bottom: 5px;
+    }
+    .step-text {
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    /* ───── VERIFICATION DEEP DIVE ───── */
+    .verify-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .verify-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .verify-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .v-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      background: rgba(79,138,255,.15);
+      border: 1px solid rgba(79,138,255,.3);
+      color: var(--blue);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .verify-card ul {
+      list-style: none;
+    }
+    .verify-card ul li {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.87rem;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+    }
+    .verify-card ul li:last-child { border-bottom: none; }
+    .verify-card ul li::before {
+      content: '✓';
+      color: var(--teal);
+      font-family: 'DM Mono', monospace;
+      flex-shrink: 0;
+    }
+    .big-callout {
+      background: linear-gradient(135deg, rgba(79,138,255,.07), rgba(45,224,192,.07));
+      border: 1px solid rgba(79,138,255,.25);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-top: 20px;
+    }
+    .big-callout p {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+    .big-callout p strong { color: var(--text); }
+
+    /* ───── DATA MODEL ───── */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .schema-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .schema-header {
+      padding: 12px 18px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .schema-header .type-name { color: var(--amber); }
+    .schema-header .entity-tag {
+      font-size: 0.65rem;
+      color: var(--dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .schema-body {
+      padding: 16px 18px;
+    }
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(30,38,64,.6);
+      gap: 8px;
+    }
+    .field-row:last-child { border-bottom: none; }
+    .field-name {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+    }
+    .field-type {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--blue);
+      opacity: .7;
+      white-space: nowrap;
+    }
+    .field-new { color: var(--teal) !important; }
+    .field-removed { color: var(--red) !important; text-decoration: line-through; opacity: .5; }
+
+    /* ───── ROUTES ───── */
+    .routes-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .routes-table th {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .routes-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(30,38,64,.7);
+      vertical-align: top;
+    }
+    .routes-table tr:last-child td { border-bottom: none; }
+    .route-path {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.83rem;
+      color: var(--blue);
+    }
+    .route-change {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .tag-keep { background: rgba(45,224,192,.1); color: var(--teal); border: 1px solid rgba(45,224,192,.2); }
+    .tag-rewrite { background: rgba(255,183,64,.1); color: var(--amber); border: 1px solid rgba(255,183,64,.2); }
+    .tag-new { background: rgba(79,138,255,.12); color: var(--blue); border: 1px solid rgba(79,138,255,.25); }
+    .tag-delete { background: rgba(255,94,106,.1); color: var(--red); border: 1px solid rgba(255,94,106,.2); }
+
+    /* ───── ROADMAP ───── */
+    .roadmap-list {
+      border-left: 2px solid var(--border-bright);
+      padding-left: 28px;
+      display: grid;
+      gap: 2px;
+    }
+    .roadmap-item {
+      position: relative;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .roadmap-item::before {
+      content: '';
+      position: absolute;
+      left: -35px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+    .phase-1::before { background: rgba(255,94,106,.2); border-color: var(--red); }
+    .phase-2::before { background: rgba(255,183,64,.2); border-color: var(--amber); }
+    .phase-3::before { background: rgba(79,138,255,.2); border-color: var(--blue); }
+    .phase-4::before { background: rgba(45,224,192,.15); border-color: var(--teal); }
+    .phase-5::before { background: rgba(61,232,154,.15); border-color: var(--green); }
+
+    .roadmap-item h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .roadmap-item p {
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .phase-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 4px;
+    }
+
+    /* ───── BLOCKCHAIN ROLE ───── */
+    .blockchain-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .blockchain-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .blockchain-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .chain-event {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.87rem;
+    }
+    .chain-event:last-child { border-bottom: none; }
+    .chain-event .ce-key {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--amber);
+      white-space: nowrap;
+      padding-top: 1px;
+    }
+    .chain-event .ce-desc { color: var(--muted); }
+
+    /* ───── RISK ───── */
+    .risk-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+    }
+    .risk-table th {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .risk-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(30,38,64,.6);
+      vertical-align: top;
+      color: var(--muted);
+    }
+    .risk-table tr:last-child td { border-bottom: none; }
+    .risk-level {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .risk-low { background: rgba(61,232,154,.08); color: var(--green); border: 1px solid rgba(61,232,154,.2); }
+    .risk-med { background: rgba(255,183,64,.08); color: var(--amber); border: 1px solid rgba(255,183,64,.2); }
+
+    /* ───── RESPONSIVE ───── */
+    @media (max-width: 700px) {
+      .compare-grid, .verify-grid, .blockchain-split { grid-template-columns: 1fr; }
+      .flow-step::after { content: ''; }
+      .hero { padding: 52px 20px 44px; }
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 20px 60px;
+      color: var(--dim);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eyebrow">VeriFind — Refactor Visual Aid</div>
+  <h1>From <span>Wallets &amp; QR</span> to<br/>School-Managed Registry</h1>
+  <p>A simplified, accessible approach to campus Lost &amp; Found — backed by blockchain audit trails, driven by campus identity.</p>
+</div>
+
+<main>
+
+  <!-- ① COMPARISON -->
+  <div class="section">
+    <div class="section-label">Section 01</div>
+    <div class="section-title">Old Model vs New Model</div>
+    <div class="compare-grid">
+      <div class="compare-col old">
+        <h3>❌ Old: Wallet + QR Ownership</h3>
+        <div class="compare-row"><div class="dot"></div><span>Requires a <strong>Cardano wallet</strong> (Eternl, Lace, Nami)</span></div>
+        <div class="compare-row"><div class="dot"></div><span>Student must <strong>understand blockchain</strong> to use the system</span></div>
+        <div class="compare-row"><div class="dot"></div><span>QR sticker encodes wallet address — <strong>anyone can attach their QR</strong> to your item</span></div>
+        <div class="compare-row"><div class="dot"></div><span>Ownership "verified" by QR scan match — <strong>easily spoofable</strong></span></div>
+        <div class="compare-row"><div class="dot"></div><span>Limited audience: CS / blockchain-literate students only</span></div>
+      </div>
+      <div class="compare-col new">
+        <h3>✓ New: School-Managed Registry</h3>
+        <div class="compare-row"><div class="dot"></div><span>Any student uses their <strong>Student ID</strong> — no wallet needed</span></div>
+        <div class="compare-row"><div class="dot"></div><span><strong>Zero blockchain knowledge</strong> required for students or finders</span></div>
+        <div class="compare-row"><div class="dot"></div><span>Ownership verified by <strong>staff + item description</strong>, not cryptographic keys</span></div>
+        <div class="compare-row"><div class="dot"></div><span><strong>Human-in-the-loop</strong> prevents fraudulent claims</span></div>
+        <div class="compare-row"><div class="dot"></div><span>Open to <strong>all CIT-U students</strong> — no technical barrier</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② ACTORS -->
+  <div class="section">
+    <div class="section-label">Section 02</div>
+    <div class="section-title">Actors &amp; Responsibilities</div>
+    <div class="actors-grid">
+      <div class="actor-card">
+        <div class="actor-icon">🔍</div>
+        <h3>Finder</h3>
+        <p>Brings found item to the Lost &amp; Found desk or submits via the public intake form. No account, no wallet required.</p>
+      </div>
+      <div class="actor-card">
+        <div class="actor-icon">🎓</div>
+        <h3>Student (Claimant)</h3>
+        <p>Browses the public board. Submits a claim using their Student ID and a description of their item. Collects in person.</p>
+      </div>
+      <div class="actor-card">
+        <div class="actor-icon">🏛️</div>
+        <h3>Admin (L&amp;F Staff)</h3>
+        <p>Logs items into the registry. Reviews claim requests. Verifies Student ID and item description. Approves or rejects. Releases the item.</p>
+      </div>
+      <div class="actor-card">
+        <div class="actor-icon">🔗</div>
+        <h3>VeriFind System</h3>
+        <p>Hosts the registry and public board. Manages item lifecycle and claim queue. Writes audit trail entries on-chain (admin-triggered only).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ FULL FLOW -->
+  <div class="section">
+    <div class="section-label">Section 03</div>
+    <div class="section-title">Complete Transaction Flow</div>
+    <div class="flow-container">
+
+      <div class="flow-phase">
+        <div class="phase-header">
+          <div class="phase-dot" style="background: var(--amber)"></div>
+          <div class="phase-label" style="color: var(--amber)">Phase A — Item Intake</div>
+          <div class="phase-bar"></div>
+          <div class="phase-actor">Actor: Finder + Admin</div>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">A.1</div>
+            <div class="step-text">Finder brings item to L&amp;F desk or submits public intake form</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">A.2</div>
+            <div class="step-text">Admin photographs item and logs it with a <strong>Private Staff Secret</strong></div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">A.3</div>
+            <div class="step-text">Item is listed publicly on the Lost Items Board</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">A.4</div>
+            <div class="step-text">On-chain anchor written (item logged event)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-phase">
+        <div class="phase-header">
+          <div class="phase-dot" style="background: var(--blue)"></div>
+          <div class="phase-label" style="color: var(--blue)">Phase B — Claim Submission</div>
+          <div class="phase-bar"></div>
+          <div class="phase-actor">Actor: Student</div>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">B.1</div>
+            <div class="step-text">Student browses board and identifies their item</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">B.2</div>
+            <div class="step-text">Student submits Claim Request: Student ID + name + contact + item description</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">B.3</div>
+            <div class="step-text">Claim enters pending queue; student receives a reference number</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-phase">
+        <div class="phase-header">
+          <div class="phase-dot" style="background: var(--teal)"></div>
+          <div class="phase-label" style="color: var(--teal)">Phase C — Admin Verification &amp; Release</div>
+          <div class="phase-bar"></div>
+          <div class="phase-actor">Actor: Admin</div>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-num">C.1</div>
+            <div class="step-text">Admin opens claim in dashboard; reviews Student ID and proof description</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">C.2</div>
+            <div class="step-text">Admin cross-checks Student ID against school records</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">C.3</div>
+            <div class="step-text">Admin physically inspects item against claimant's description</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">C.4</div>
+            <div class="step-text">Approve or Reject claim with notes; student notified</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">C.5</div>
+            <div class="step-text">Student appears in person with campus ID card; item released</div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">C.6</div>
+            <div class="step-text">Status set to Returned; on-chain anchor written</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ④ VERIFICATION DEEP DIVE -->
+  <div class="section">
+    <div class="section-label">Section 04</div>
+    <div class="section-title">How Ownership Is Actually Verified</div>
+    <div class="verify-grid">
+      <div class="verify-card">
+        <h3><span class="v-num">Factor 1</span> Student ID</h3>
+        <ul>
+          <li>Ties the claim to a real, registered CIT-U student</li>
+          <li>Admin cross-checks against official school records</li>
+          <li>Creates accountability — the claim is tied to a real person</li>
+        </ul>
+      </div>
+      <div class="verify-card">
+        <h3><span class="v-num">Factor 2</span> Descriptive Proof</h3>
+        <ul>
+          <li>Student must describe brand, color, markings, contents, etc.</li>
+          <li>Details only the real owner would plausibly know</li>
+          <li>Admin physically compares description to the found item</li>
+        </ul>
+      </div>
+      <div class="verify-card">
+        <h3><span class="v-num">Factor 3</span> Physical Pickup</h3>
+        <ul>
+          <li>Student must appear in person at the L&amp;F office</li>
+          <li>Presents their physical campus ID card to staff</li>
+          <li>No remote release — prevents proxy fraud</li>
+        </ul>
+      </div>
+      <div class="verify-card">
+        <h3><span class="v-num">Factor 4</span> Staff Judgment</h3>
+        <ul>
+          <li>Only an admin can finalize a claim — no self-service release</li>
+          <li>All approvals are logged with admin ID and timestamp</li>
+          <li>High-value items can require supervisor dual-approval</li>
+        </ul>
+      </div>
+    </div>
+    <div class="big-callout">
+      <p>
+        <strong>Why this is more secure than QR stickers:</strong> A bad actor would need to (1) know the item's specific details, (2) possess a valid CIT-U Student ID, and (3) physically impersonate the real owner in front of L&amp;F staff. The old QR model required only knowing the wallet address — which was encoded in a sticker anyone could copy or swap.
+      </p>
+    </div>
+  </div>
+
+  <!-- ⑤ DATA MODEL -->
+  <div class="section">
+    <div class="section-label">Section 05</div>
+    <div class="section-title">Data Model Changes</div>
+    <div class="data-grid">
+      <div class="schema-card">
+        <div class="schema-header">
+          <span class="type-name">FoundItem</span>
+          <span class="entity-tag">updated</span>
+        </div>
+        <div class="schema-body">
+          <div class="field-row"><span class="field-name field-removed">ownerAddress</span><span class="field-type field-removed">string</span></div>
+          <div class="field-row"><span class="field-name field-removed">txHash</span><span class="field-type field-removed">string</span></div>
+          <div class="field-row"><span class="field-name">id</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">name</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">description</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">locationFound</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">status</span><span class="field-type">ItemStatus</span></div>
+          <div class="field-row"><span class="field-name field-new">custodyStatus</span><span class="field-type field-new">'held' | 'released'</span></div>
+          <div class="field-row"><span class="field-name field-new">loggedBy</span><span class="field-type field-new">adminId</span></div>
+          <div class="field-row"><span class="field-name field-new">auditLog</span><span class="field-type field-new">AuditEntry[]</span></div>
+        </div>
+      </div>
+      <div class="schema-card">
+        <div class="schema-header">
+          <span class="type-name">ClaimRequest</span>
+          <span class="entity-tag">new</span>
+        </div>
+        <div class="schema-body">
+          <div class="field-row"><span class="field-name field-new">claimId</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">itemId</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">studentId</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">studentName</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">contactInfo</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">proofDescription</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">status</span><span class="field-type field-new">ClaimStatus</span></div>
+          <div class="field-row"><span class="field-name field-new">reviewedBy</span><span class="field-type field-new">adminId?</span></div>
+          <div class="field-row"><span class="field-name field-new">reviewNotes</span><span class="field-type field-new">string?</span></div>
+        </div>
+      </div>
+      <div class="schema-card">
+        <div class="schema-header">
+          <span class="type-name">AuditEntry</span>
+          <span class="entity-tag">new</span>
+        </div>
+        <div class="schema-body">
+          <div class="field-row"><span class="field-name field-new">timestamp</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">action</span><span class="field-type field-new">'logged' | 'claimed' | 'approved' | 'rejected' | 'released'</span></div>
+          <div class="field-row"><span class="field-name field-new">actor</span><span class="field-type field-new">adminId | studentId</span></div>
+          <div class="field-row"><span class="field-name field-new">notes</span><span class="field-type field-new">string?</span></div>
+        </div>
+      </div>
+      <div class="schema-card">
+        <div class="schema-header">
+          <span class="type-name">AdminUser</span>
+          <span class="entity-tag">new</span>
+        </div>
+        <div class="schema-body">
+          <div class="field-row"><span class="field-name field-new">adminId</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">name</span><span class="field-type field-new">string</span></div>
+          <div class="field-row"><span class="field-name field-new">role</span><span class="field-type field-new">'staff' | 'supervisor'</span></div>
+          <div class="field-row"><span class="field-name field-new">actionHistory</span><span class="field-type field-new">AuditEntry[]</span></div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top: 14px; font-size: 0.83rem; color: var(--dim); font-family: 'DM Mono', monospace;">
+      <span style="color: var(--teal)">■</span> teal = new field &nbsp;&nbsp; <span style="color: var(--red)">■</span> red/strikethrough = removed
+    </p>
+  </div>
+
+  <!-- ⑥ ROUTES -->
+  <div class="section">
+    <div class="section-label">Section 06</div>
+    <div class="section-title">Route &amp; Component Changes</div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;">
+      <table class="routes-table">
+        <thead>
+          <tr>
+            <th>Route / Component</th>
+            <th>Change</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="route-path">/board</span></td>
+            <td><span class="route-change tag-keep">keep</span></td>
+            <td style="color: var(--muted);">Remove wallet-connect gate; add status filter</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">/claim/[id]</span></td>
+            <td><span class="route-change tag-rewrite">rewrite</span></td>
+            <td style="color: var(--muted);">Replace QrScanner + VerifyOwnershipPanel with Student ID claim form</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">/my-claims</span></td>
+            <td><span class="route-change tag-new">new</span></td>
+            <td style="color: var(--muted);">Student ID lookup → view all submitted claims + statuses</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">/admin</span></td>
+            <td><span class="route-change tag-rewrite">rewrite</span></td>
+            <td style="color: var(--muted);">Add claim queue, approval/rejection UI, custody status, release action</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">/wallet</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);">Redirect to /my-claims</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">WalletProvider.tsx</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);">No wallet context needed for students</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">WalletConnect.tsx</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);">Remove from nav</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">OwnerQrCard.tsx</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);">QR sticker model removed entirely</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">QrScanner.tsx</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);">QR scan model removed entirely</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">HowItWorks.tsx</span></td>
+            <td><span class="route-change tag-rewrite">rewrite</span></td>
+            <td style="color: var(--muted);">Replace wallet/QR steps with school-managed flow</td>
+          </tr>
+          <tr>
+            <td><span class="route-path">lib/qrPayload.ts</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);"></td>
+          </tr>
+          <tr>
+            <td><span class="route-path">lib/verifyOwnership.ts</span></td>
+            <td><span class="route-change tag-delete">delete</span></td>
+            <td style="color: var(--muted);"></td>
+          </tr>
+          <tr>
+            <td><span class="route-path">lib/itemTypes.ts</span></td>
+            <td><span class="route-change tag-rewrite">rewrite</span></td>
+            <td style="color: var(--muted);">New type definitions per Section 05</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ⑦ BLOCKCHAIN ROLE -->
+  <div class="section">
+    <div class="section-label">Section 07</div>
+    <div class="section-title">Blockchain's Narrowed Role</div>
+    <div class="blockchain-split">
+      <div class="blockchain-card">
+        <h3 style="color: var(--red);">❌ No Longer Used For</h3>
+        <div class="chain-event"><span class="ce-key">ownership</span><span class="ce-desc">Wallet address no longer represents item ownership</span></div>
+        <div class="chain-event"><span class="ce-key">qr-verify</span><span class="ce-desc">QR payload-to-wallet matching is removed</span></div>
+        <div class="chain-event"><span class="ce-key">student-tx</span><span class="ce-desc">Students never submit transactions directly</span></div>
+      </div>
+      <div class="blockchain-card">
+        <h3 style="color: var(--teal);">✓ Still Used For (Admin Only)</h3>
+        <div class="chain-event"><span class="ce-key">item.logged</span><span class="ce-desc">Item registered in system — immutable timestamp</span></div>
+        <div class="chain-event"><span class="ce-key">claim.approved</span><span class="ce-desc">Admin approves a claim — anchors the decision</span></div>
+        <div class="chain-event"><span class="ce-key">item.returned</span><span class="ce-desc">Item physically released — final audit record</span></div>
+      </div>
+    </div>
+    <div class="big-callout" style="margin-top: 20px;">
+      <p>
+        On-chain records are written by the <strong>school's admin wallet</strong> only — never by students. This preserves a tamper-resistant audit trail that institutional records alone cannot provide, while removing all technical barriers for students.
+      </p>
+    </div>
+  </div>
+
+  <!-- ⑧ AUDIT -->
+  <div class="section">
+    <div class="section-label">Section 08</div>
+    <div class="section-title">Implementation Status Audit</div>
+    <div class="roadmap-list">
+      <div class="roadmap-item phase-5">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--green);">Institutional Verification</h3>
+        <p>Replaced anonymous wallet addresses with Student IDs. Added a "Staff Secret" (hidden description) field to all items to prevent fraudulent claims by cross-referencing student proof.</p>
+      </div>
+      <div class="roadmap-item phase-5">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--green);">Persistent Backend (Supabase)</h3>
+        <p>Successfully migrated all data to Supabase (PostgreSQL), replacing the initial mock JSON infrastructure. Enables long-term data durability and complex querying.</p>
+      </div>
+      <div class="roadmap-item phase-4">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--teal);">Real-time Synchronization</h3>
+        <p>The Lost Items Board and Admin Panel now update instantly across all clients using Supabase's real-time replication features — no manual refreshing required.</p>
+      </div>
+      <div class="roadmap-item phase-3">
+        <div class="phase-tag">Status — Completed</div>
+        <h3 style="color: var(--blue);">On-Chain Audit Trail</h3>
+        <p>Critical events (Item Logged, Claim Approved, Item Returned) are anchored to the Cardano Preview network via server-side signing using MeshJS and Blockfrost.</p>
+      </div>
+      <div class="roadmap-item phase-2">
+        <div class="phase-tag">Future — Minor Gap</div>
+        <h3 style="color: var(--amber);">Admin Authentication</h3>
+        <p>The /admin panel is currently open to any user with the URL. Integrating NextAuth with Supabase is the planned next step for enterprise-grade security.</p>
+      </div>
+      <div class="roadmap-item phase-1">
+        <div class="phase-tag">Future — Minor Gap</div>
+        <h3 style="color: var(--red);">Dedicated Photo Storage</h3>
+        <p>Current photo URLs are stored as strings. Integrating Supabase Storage will allow for direct drag-and-drop image uploads within the admin intake form.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑨ RISKS -->
+  <div class="section">
+    <div class="section-label">Section 09</div>
+    <div class="section-title">Risk Register</div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;">
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>Risk</th>
+            <th>Level</th>
+            <th>Mitigation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Claimant guesses item description well enough to fake ownership</td>
+            <td><span class="risk-level risk-low">Low</span></td>
+            <td>Staff physically inspect item; physical ID required at pickup</td>
+          </tr>
+          <tr>
+            <td>Admin approves incorrect claim</td>
+            <td><span class="risk-level risk-low">Low</span></td>
+            <td>Dual-approval for high-value items; full audit log for accountability</td>
+          </tr>
+          <tr>
+            <td>Student ID entered by wrong person</td>
+            <td><span class="risk-level risk-low">Low</span></td>
+            <td>Pickup requires physical campus ID; claim tied to person, not session</td>
+          </tr>
+          <tr>
+            <td>Database record tampered</td>
+            <td><span class="risk-level risk-low">Low</span></td>
+            <td>On-chain anchors for key events provide independent verification</td>
+          </tr>
+          <tr>
+            <td>Approved claimant never picks up item</td>
+            <td><span class="risk-level risk-med">Medium</span></td>
+            <td>Set a release window (e.g., 3 days); auto-return to registry if uncollected</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  VeriFind — School-Handled Lost &amp; Found Registry &nbsp;·&nbsp; Refactor Visual Aid &nbsp;·&nbsp; CIT-U
+</footer>
+
+</body>
+</html>

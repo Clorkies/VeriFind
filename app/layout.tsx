@@ -3,7 +3,6 @@ import { Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { EutxoWatermark } from "./components/EutxoWatermark";
 import { Providers } from "./components/Providers";
-import { Analytics } from "@vercel/analytics/react";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],

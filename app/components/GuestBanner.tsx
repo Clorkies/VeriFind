@@ -25,7 +25,7 @@ export function GuestBanner() {
         <p className="relative flex-1 leading-snug">
           Browsing as{" "}
           <span className="font-semibold text-[var(--color-accent)]">Guest</span>{" "}
-          · Connect a wallet to print your QR sticker or verify ownership.
+          · Submit claims with your Student ID for staff review.
         </p>
         <button
           type="button"

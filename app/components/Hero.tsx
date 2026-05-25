@@ -26,7 +26,7 @@ export function Hero() {
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)] px-3 py-1.5 text-xs font-medium tracking-wide text-[var(--color-text-soft)]">
           <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />
           <span>
-            Live on Cardano · Preprod
+            Live on Cardano · Preview
           </span>
         </div>
 
@@ -45,10 +45,9 @@ export function Hero() {
           className="animate-fade-up text-lg leading-relaxed text-[var(--color-text-soft)] sm:text-xl"
           style={{ animationDelay: "0.15s" }}
         >
-          The immutable, decentralized lost &amp; found registry for the
-          CIT-U campus. Every entry is a verifiable receipt, no passwords,
-          no gatekeepers—tag items with your{" "}
-          <span className="font-semibold text-[var(--color-accent)]">owner QR sticker</span>.
+          A school-managed lost &amp; found registry for the CIT-U campus. Items are
+          logged by staff, and students claim them with a Student ID and verified
+          description—no wallets or QR stickers required.
         </p>
 
         <div
@@ -64,10 +63,10 @@ export function Hero() {
           </Link>
 
           <Link
-            href="/wallet"
+            href="/my-claims"
             className="btn-ghost inline-flex items-center gap-2 rounded-xl px-6 py-4 text-base font-medium transition hover:-translate-y-0.5"
           >
-            My QR sticker
+            My Claims
             <span aria-hidden>→</span>
           </Link>
           <Link
@@ -84,9 +83,9 @@ export function Hero() {
           className="animate-fade-up grid max-w-md grid-cols-3 gap-3 pt-6"
           style={{ animationDelay: "0.4s" }}
         >
-          <Stat label="On-chain" value="100%" />
-          <Stat label="Wallets" value="No PW" />
-          <Stat label="Ledger" value="Cardano" />
+          <Stat label="On-chain" value="Audit" />
+          <Stat label="Claims" value="Staff" />
+          <Stat label="Identity" value="Student ID" />
         </div>
       </div>
 

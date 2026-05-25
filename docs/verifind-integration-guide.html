@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeriFind Integration Guide</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Figtree:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+
+  <style>
+    :root {
+      --bg:           #040d14;
+      --surface:      #071824;
+      --panel:        #0b2236;
+      --cyan:         #00d4ff;
+      --cyan-dim:     rgba(0, 212, 255, 0.10);
+      --cyan-border:  rgba(0, 212, 255, 0.20);
+      --amber:        #f0b429;
+      --amber-dim:    rgba(240, 180, 41, 0.10);
+      --amber-border: rgba(240, 180, 41, 0.22);
+      --text-primary: #e8f4fc;
+      --text-soft:    #7ba3be;
+      --text-muted:   #3d6478;
+      --border:       rgba(0, 212, 255, 0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Figtree', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient top-right glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -250px;
+      right: -250px;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.05) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ══════════════════════════════════
+       HEADER
+    ══════════════════════════════════ */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(4, 13, 20, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--cyan-dim);
+      border: 1px solid var(--cyan-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .site-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .site-subtitle {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--cyan);
+      letter-spacing: 0.1em;
+      margin-top: 1px;
+    }
+
+    .header-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.28rem 0.8rem;
+      border-radius: 100px;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .header-pill-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan);
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ══════════════════════════════════
+       HERO
+    ══════════════════════════════════ */
+    .hero {
+      padding: 5rem 0 3.5rem;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .hero-eyebrow::before, .hero-eyebrow::after {
+      content: '';
+      display: inline-block;
+      width: 28px;
+      height: 1px;
+      background: var(--cyan);
+      opacity: 0.45;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      color: var(--text-primary);
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title .accent { color: var(--cyan); }
+
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--text-soft);
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.75;
+    }
+
+    .hero-chips {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.85rem;
+      border-radius: 100px;
+      color: var(--text-soft);
+      letter-spacing: 0.03em;
+    }
+
+    .chip-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 5px var(--cyan);
+      animation: blink 2s infinite;
+    }
+
+    .chip-dot.amber {
+      background: var(--amber);
+      box-shadow: 0 0 5px var(--amber);
+      animation-delay: 0.7s;
+    }
+
+    .chip-dot.green {
+      background: #27c93f;
+      box-shadow: 0 0 5px #27c93f;
+      animation-delay: 1.4s;
+    }
+
+    /* ══════════════════════════════════
+       SECTION WRAPPER
+    ══════════════════════════════════ */
+    .section {
+      padding: 4rem 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header { margin-bottom: 2.25rem; }
+
+    .section-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      margin-bottom: 0.6rem;
+    }
+
+    .section-desc {
+      font-size: 0.88rem;
+      color: var(--text-soft);
+      max-width: 620px;
+      line-height: 1.75;
+    }
+
+    .section-line {
+      height: 1px;
+      background: linear-gradient(90deg, var(--cyan-border), transparent 70%);
+      margin-bottom: 2.75rem;
+    }
+
+    /* ══════════════════════════════════
+       FLOW STEPS
+    ══════════════════════════════════ */
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      position: relative;
+    }
+
+    /* Horizontal connector line behind the circles */
+    .flow-grid::before {
+      content: '';
+      position: absolute;
+      top: 23px; /* center of 48px circle */
+      left: calc(12.5% - 0px);
+      right: calc(12.5% - 0px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent 2%, var(--cyan-border) 15%, var(--cyan-border) 85%, transparent 98%);
+      z-index: 0;
+    }
+
+    @media (max-width: 768px) {
+      .flow-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .flow-grid::before { display: none; }
+    }
+
+    .flow-step {
+      position: relative;
+      padding: 0 0.65rem;
+      z-index: 1;
+    }
+
+    .step-badge-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .step-num {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--panel);
+      border: 1px solid var(--cyan-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--cyan);
+      flex-shrink: 0;
+      box-shadow: 0 0 18px rgba(0, 212, 255, 0.08);
+      position: relative;
+      z-index: 2;
+      transition: box-shadow 0.3s, background 0.3s;
+    }
+
+    .step-num.amber-num {
+      border-color: var(--amber-border);
+      color: var(--amber);
+      box-shadow: 0 0 18px rgba(240, 180, 41, 0.08);
+    }
+
+    .flow-step:hover .step-num       { box-shadow: 0 0 28px rgba(0, 212, 255, 0.22); background: rgba(0, 212, 255, 0.06); }
+    .flow-step:hover .step-num.amber-num { box-shadow: 0 0 28px rgba(240, 180, 41, 0.2); background: rgba(240, 180, 41, 0.06); }
+
+    /* Small arrow between steps */
+    .step-num::after {
+      content: '›';
+      position: absolute;
+      right: -1.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--cyan);
+      opacity: 0.3;
+      font-size: 1.1rem;
+      font-weight: 300;
+    }
+
+    .flow-step:last-child .step-num::after { display: none; }
+
+    .step-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.15rem;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+
+    .flow-step:hover .step-card {
+      border-color: var(--cyan-border);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0, 212, 255, 0.05);
+    }
+
+    .flow-step:nth-child(2):hover .step-card {
+      border-color: var(--amber-border);
+      box-shadow: 0 12px 32px rgba(240, 180, 41, 0.05);
+    }
+
+    .step-role {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.63rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 0.65rem;
+    }
+
+    .role-admin   { background: var(--cyan-dim);  color: var(--cyan);  border: 1px solid var(--cyan-border); }
+    .role-student { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-border); }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .step-desc {
+      font-size: 0.81rem;
+      color: var(--text-soft);
+      line-height: 1.62;
+      margin-bottom: 0.8rem;
+    }
+
+    .step-event {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      padding: 0.32rem 0.6rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .event-chain { background: rgba(0,212,255,0.06); border: 1px solid var(--cyan-border); color: var(--cyan); }
+    .event-db    { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); }
+
+    .event-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ══════════════════════════════════
+       CODE BLOCKS
+    ══════════════════════════════════ */
+    .tech-section { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .code-row {
+      display: grid;
+      grid-template-columns: 1fr 2.2fr;
+      gap: 2rem;
+      align-items: start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .code-row:hover {
+      border-color: var(--cyan-border);
+      box-shadow: 0 8px 40px rgba(0, 212, 255, 0.04);
+    }
+
+    @media (max-width: 860px) {
+      .code-row { grid-template-columns: 1fr; }
+    }
+
+    .code-meta { position: relative; padding-top: 0.25rem; }
+
+    .big-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 4.5rem;
+      font-weight: 800;
+      color: var(--cyan);
+      opacity: 0.06;
+      line-height: 1;
+      position: absolute;
+      top: -0.75rem;
+      left: -0.25rem;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: -0.04em;
+    }
+
+    .code-meta-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.55rem;
+      position: relative;
+    }
+
+    .code-meta-desc {
+      font-size: 0.83rem;
+      color: var(--text-soft);
+      line-height: 1.68;
+    }
+
+    .code-meta-desc code,
+    .code-note code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      background: rgba(0, 212, 255, 0.07);
+      color: var(--cyan);
+      padding: 0.08em 0.4em;
+      border-radius: 4px;
+      border: 1px solid var(--cyan-border);
+    }
+
+    .code-note {
+      margin-top: 0.75rem;
+      font-size: 0.81rem;
+      color: var(--text-soft);
+      line-height: 1.65;
+    }
+
+    /* Code block chrome */
+    .code-wrap {
+      background: #0d1117;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .code-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1rem;
+      background: rgba(0,0,0,0.45);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .chrome-dots { display: flex; gap: 0.38rem; }
+    .chrome-dot  { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff5f56; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #27c93f; }
+
+    .chrome-filename {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.67rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .chrome-lang {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.63rem;
+      color: var(--cyan);
+      background: var(--cyan-dim);
+      border: 1px solid var(--cyan-border);
+      padding: 0.12rem 0.45rem;
+      border-radius: 3px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 1.2rem 1.25rem;
+      overflow-x: auto;
+      font-size: 0.81rem;
+      line-height: 1.72;
+    }
+
+    pre::-webkit-scrollbar         { height: 5px; width: 5px; }
+    pre::-webkit-scrollbar-track   { background: rgba(0,0,0,0.2); border-radius: 3px; }
+    pre::-webkit-scrollbar-thumb   { background: rgba(0,212,255,0.35); border-radius: 3px; }
+
+    pre code {
+      font-family: 'IBM Plex Mono', monospace !important;
+      background: transparent !important;
+    }
+
+    /* ══════════════════════════════════
+       FOOTER
+    ══════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 4rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.6rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-copy {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .footer-network {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--cyan);
+    }
+
+    .footer-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: blink 1.8s infinite;
+    }
+
+    /* ══════════════════════════════════
+       SCROLL ANIMATIONS
+    ══════════════════════════════════ */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .fade-up.in { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="header-inner">
+      <div class="logo-block">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="site-title">VeriFind</div>
+          <div class="site-subtitle">ARCHITECTURE GUIDE</div>
+        </div>
+      </div>
+      <div class="header-pill">
+        <div class="header-pill-dot"></div>
+        Cardano Preview
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ── HERO ── -->
+    <div class="hero fade-up">
+      <div class="hero-eyebrow">Integration Guide</div>
+      <h1 class="hero-title">
+        System Flow &amp;<br>
+        <span class="accent">Cardano Ledger</span>
+      </h1>
+      <p class="hero-desc">
+        The complete architecture of VeriFind — from item intake through immutable
+        blockchain anchoring on Cardano's Preview network.
+      </p>
+      <div class="hero-chips">
+        <div class="chip"><div class="chip-dot"></div>MeshJS SDK</div>
+        <div class="chip"><div class="chip-dot amber"></div>Blockfrost API</div>
+        <div class="chip"><div class="chip-dot green"></div>Supabase DB</div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 1: Flow ── -->
+    <section class="section fade-up">
+      <div class="section-header">
+        <div class="section-tag">01 — System Flow</div>
+        <h2 class="section-title">End-to-End Item Lifecycle</h2>
+        <p class="section-desc">
+          How institutional verification (Student IDs + Secret Descriptions) connects with
+          immutable blockchain anchoring through the complete journey of a found item.
+        </p>
+      </div>
+      <div class="section-line"></div>
+
+      <div class="flow-grid">
+
+        <!-- Step 1 -->
+        <div class="flow-step">
+          <div class="step-badge-row">
+            <div class="step-num">01</div>
+          </div>
+          <div class="step-card">
+            <span class="step-role role-admin">Admin</span>
+            <div class="step-title">Intake &amp; Log</div>
+            <p class="step-desc">
+              Staff logs the item with a public description and a <strong>Private Staff Secret</strong>
+              — e.g. specific contents or identifying scratches.
+            </p>
+            <div class="step-event event-chain">
+              <div class="event-dot"></div> item.logged TX
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flow-step">
+          <div class="step-badge-row">
+            <div class="step-num amber-num">02</div>
+          </div>
+          <div class="step-card">
+            <span class="step-role role-student">Student</span>
+            <div class="step-title">Discovery</div>
+            <p class="step-desc">
+              Student finds item on the public board, submits a Claim Request using their
+              <strong>Student ID</strong>, and attempts to describe the hidden secret.
+            </p>
+            <div class="step-event event-db">
+              <div class="event-dot"></div> Saved to Supabase DB
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flow-step">
+          <div class="step-badge-row">
+            <div class="step-num">03</div>
+          </div>
+          <div class="step-card">
+            <span class="step-role role-admin">Admin</span>
+            <div class="step-title">Staff Review</div>
+            <p class="step-desc">
+              Staff compares the student's proof against the Private Staff Secret. If it
+              matches, the claim is approved.
+            </p>
+            <div class="step-event event-chain">
+              <div class="event-dot"></div> claim.approved TX
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="flow-step">
+          <div class="step-badge-row">
+            <div class="step-num">04</div>
+          </div>
+          <div class="step-card">
+            <span class="step-role role-admin">Admin</span>
+            <div class="step-title">Physical Release</div>
+            <p class="step-desc">
+              Student presents their physical campus ID at the desk. Staff verifies
+              identity and hands over the item.
+            </p>
+            <div class="step-event event-chain">
+              <div class="event-dot"></div> item.returned TX
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── SECTION 2: Technical ── -->
+    <section class="section fade-up">
+      <div class="section-header">
+        <div class="section-tag">02 — Technical Implementation</div>
+        <h2 class="section-title">Cardano Ledger Integration</h2>
+        <p class="section-desc">
+          How the server-side Next.js route uses MeshJS to build, sign, and submit metadata
+          transactions to the Cardano Preview network — without requiring student wallets.
+        </p>
+      </div>
+      <div class="section-line"></div>
+
+      <div class="tech-section">
+
+        <!-- Block 1 -->
+        <div class="code-row fade-up">
+          <div class="code-meta">
+            <div class="big-num">1</div>
+            <div class="code-meta-title">Wallet &amp; Provider Init</div>
+            <p class="code-meta-desc">
+              Located in <code>app/api/ledger/anchor/route.ts</code>. We initialize a
+              headless wallet using the server's mnemonic and connect it to Blockfrost.
+            </p>
+          </div>
+          <div class="code-wrap">
+            <div class="code-chrome">
+              <div class="chrome-dots">
+                <div class="chrome-dot dot-r"></div>
+                <div class="chrome-dot dot-y"></div>
+                <div class="chrome-dot dot-g"></div>
+              </div>
+              <div class="chrome-filename">Server-side Setup</div>
+              <div class="chrome-lang">.ts</div>
+            </div>
+            <pre><code class="language-typescript">const provider = new BlockfrostProvider(process.env.BLOCKFROST_PROJECT_ID);
+
+const wallet = await MeshCardanoHeadlessWallet.fromMnemonic({
+  mnemonic: process.env.CARDANO_ADMIN_MNEMONIC.trim().split(/\s+/),
+  networkId: 0, // 0 for Preview, 1 for Mainnet
+  walletAddressType: AddressType.Base,
+  fetcher: provider,
+});
+
+const changeAddress = await wallet.getChangeAddressBech32();</code></pre>
+          </div>
+        </div>
+
+        <!-- Block 2 -->
+        <div class="code-row fade-up">
+          <div class="code-meta">
+            <div class="big-num">2</div>
+            <div class="code-meta-title">Metadata &amp; Tx Building</div>
+            <p class="code-meta-desc">
+              We construct a JSON object with event details, attached to the transaction
+              under the CIP-20 standard label <code>674</code>.
+            </p>
+            <p class="code-note">
+              Because this is an anchor transaction, we send 2,000,000 Lovelace back to
+              our own change address to satisfy protocol rules.
+            </p>
+          </div>
+          <div class="code-wrap">
+            <div class="code-chrome">
+              <div class="chrome-dots">
+                <div class="chrome-dot dot-r"></div>
+                <div class="chrome-dot dot-y"></div>
+                <div class="chrome-dot dot-g"></div>
+              </div>
+              <div class="chrome-filename">Transaction Construction</div>
+              <div class="chrome-lang">.ts</div>
+            </div>
+            <pre><code class="language-typescript">const metadata = {
+  app: "verifind",
+  event: body.event, // e.g. "claim.approved"
+  itemId: body.itemId,
+  claimId: body.claimId ?? null,
+  adminId: body.adminId,
+  timestamp: new Date().toISOString(),
+};
+
+const tx = new Transaction({
+  initiator: wallet as any, // Cast bypasses beta version mismatch
+  fetcher: provider,
+  submitter: provider,
+  evaluator: provider,
+})
+  .sendLovelace(changeAddress, "2000000")
+  .setMetadata(674, metadata);</code></pre>
+          </div>
+        </div>
+
+        <!-- Block 3 -->
+        <div class="code-row fade-up">
+          <div class="code-meta">
+            <div class="big-num">3</div>
+            <div class="code-meta-title">Sign &amp; Submit</div>
+            <p class="code-meta-desc">
+              The headless wallet signs the built transaction autonomously. We broadcast
+              it to the network via Blockfrost and return the hash to the frontend.
+            </p>
+          </div>
+          <div class="code-wrap">
+            <div class="code-chrome">
+              <div class="chrome-dots">
+                <div class="chrome-dot dot-r"></div>
+                <div class="chrome-dot dot-y"></div>
+                <div class="chrome-dot dot-g"></div>
+              </div>
+              <div class="chrome-filename">Network Broadcast</div>
+              <div class="chrome-lang">.ts</div>
+            </div>
+            <pre><code class="language-typescript">const unsignedTx = await tx.build();
+const signedTx = await wallet.signTxReturnFullTx(unsignedTx);
+const txHash = await provider.submitTx(signedTx);
+
+return Response.json({ txHash });</code></pre>
+          </div>
+        </div>
+
+        <!-- Block 4 -->
+        <div class="code-row fade-up">
+          <div class="code-meta">
+            <div class="big-num">4</div>
+            <div class="code-meta-title">Saving the Anchor</div>
+            <p class="code-meta-desc">
+              In <code>ItemsProvider.tsx</code>, after the database mutation, we trigger
+              the API route and save the resulting hash back to Supabase.
+            </p>
+          </div>
+          <div class="code-wrap">
+            <div class="code-chrome">
+              <div class="chrome-dots">
+                <div class="chrome-dot dot-r"></div>
+                <div class="chrome-dot dot-y"></div>
+                <div class="chrome-dot dot-g"></div>
+              </div>
+              <div class="chrome-filename">Frontend Context Action</div>
+              <div class="chrome-lang">.tsx</div>
+            </div>
+            <pre><code class="language-typescript">// Example from approveClaim()
+const txHash = await anchorLedger({
+  event: "claim.approved",
+  itemId: claim.item_id,
+  claimId: claimId,
+  adminId: adminId,
+});
+
+// Save TxHash to database for public verification
+await supabase
+  .from("items")
+  .update({ tx_hash: txHash })
+  .eq("id", claim.item_id);</code></pre>
+          </div>
+        </div>
+
+        <!-- Block 5 -->
+        <div class="code-row fade-up">
+          <div class="code-meta">
+            <div class="big-num">5</div>
+            <div class="code-meta-title">Public Verification</div>
+            <p class="code-meta-desc">
+              On Item Cards, we use the saved transaction hash to generate a direct link
+              to a blockchain explorer, proving the event occurred on-chain.
+            </p>
+          </div>
+          <div class="code-wrap">
+            <div class="code-chrome">
+              <div class="chrome-dots">
+                <div class="chrome-dot dot-r"></div>
+                <div class="chrome-dot dot-y"></div>
+                <div class="chrome-dot dot-g"></div>
+              </div>
+              <div class="chrome-filename">ItemCard.tsx snippet</div>
+              <div class="chrome-lang">.tsx</div>
+            </div>
+            <pre><code class="language-tsx">{item.txHash ? (
+  &lt;a
+    href={`https://preview.cardanoscan.io/transaction/${item.txHash}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="hover:underline text-accent"
+  &gt;
+    On-chain ↗
+  &lt;/a&gt;
+) : null}</code></pre>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── SECTION 3: User Experience ── -->
+    <section class="section fade-up">
+      <div class="section-header">
+        <div class="section-tag">03 — User Experience</div>
+        <h2 class="section-title">Operational Roles &amp; Flows</h2>
+        <p class="section-desc">
+          Detailed step-by-step interaction guide for both administrators and students using the VeriFind platform.
+        </p>
+      </div>
+      <div class="section-line"></div>
+
+      <div class="tech-section">
+        <div class="code-row fade-up" style="grid-template-columns: 1fr 1fr;">
+          <div class="code-meta">
+            <div class="code-meta-title" style="color: var(--cyan); display: flex; align-items: center; gap: 0.5rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Admin Workflow
+            </div>
+            <p class="code-meta-desc">The staff-led intake and verification process.</p>
+            <div class="code-note">
+              <strong>1. Intake:</strong> Staff logs the item (e.g., "Silver Watch") and adds a <strong>Secret Description</strong> (e.g., "Engraved 'To John' on the back").
+            </div>
+            <div class="code-note">
+              <strong>2. Review:</strong> Staff compares incoming student claims against the secret. If the student mentions the engraving, it's a match.
+            </div>
+            <div class="code-note">
+              <strong>3. Approval:</strong> Clicking 'Approve' updates the registry and anchors the decision to the Cardano ledger.
+            </div>
+            <div class="code-note">
+              <strong>4. Release:</strong> Upon student arrival, staff verifies the physical Student ID and releases the item.
+            </div>
+          </div>
+          <div class="code-meta">
+            <div class="code-meta-title" style="color: var(--amber); display: flex; align-items: center; gap: 0.5rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              Student Workflow
+            </div>
+            <p class="code-meta-desc">The user discovery and retrieval journey.</p>
+            <div class="code-note">
+              <strong>1. Discovery:</strong> Student browses the public board at <code>/board</code> and identifies their lost item.
+            </div>
+            <div class="code-note">
+              <strong>2. Claiming:</strong> Student submits a claim with their <strong>Student ID</strong> and describes the item's unique features.
+            </div>
+            <div class="code-note">
+              <strong>3. Tracking:</strong> Student visits <code>/my-claims</code> to track the progress of their request in real-time.
+            </div>
+            <div class="code-note">
+              <strong>4. Retrieval:</strong> Once approved, the student visits the office with their ID card to collect the item.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION 4: Audit ── -->
+    <section class="section fade-up">
+      <div class="section-header">
+        <div class="section-tag">04 — Project Status</div>
+        <h2 class="section-title">Implementation Status Audit</h2>
+        <p class="section-desc">
+          A transparency report on the current state of the VeriFind platform and upcoming enhancements.
+        </p>
+      </div>
+      <div class="section-line"></div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+        <!-- Pillar 1 -->
+        <div class="step-card" style="border-left: 4px solid var(--cyan);">
+          <div class="step-title" style="display: flex; justify-content: space-between; align-items: center;">
+            Institutional Verification
+            <span class="step-role role-admin" style="margin-bottom: 0;">Completed</span>
+          </div>
+          <p class="step-desc">Replaced anonymous wallets with Student IDs and added "Staff Secret" fields to prevent fraud.</p>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="step-card" style="border-left: 4px solid var(--cyan);">
+          <div class="step-title" style="display: flex; justify-content: space-between; align-items: center;">
+            Persistent Backend
+            <span class="step-role role-admin" style="margin-bottom: 0;">Completed</span>
+          </div>
+          <p class="step-desc">Full migration to Supabase (PostgreSQL), providing a reliable and scalable data layer.</p>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="step-card" style="border-left: 4px solid var(--cyan);">
+          <div class="step-title" style="display: flex; justify-content: space-between; align-items: center;">
+            Real-time Sync
+            <span class="step-role role-admin" style="margin-bottom: 0;">Completed</span>
+          </div>
+          <p class="step-desc">Instant board and admin panel updates using Supabase's real-time replication features.</p>
+        </div>
+
+        <!-- Pillar 4 -->
+        <div class="step-card" style="border-left: 4px solid var(--cyan);">
+          <div class="step-title" style="display: flex; justify-content: space-between; align-items: center;">
+            On-Chain Audit Trail
+            <span class="step-role role-admin" style="margin-bottom: 0;">Completed</span>
+          </div>
+          <p class="step-desc">Critical events (Log, Approve, Return) are anchored to Cardano Preview via server-side signing.</p>
+        </div>
+
+        <!-- Gap 1 -->
+        <div class="step-card" style="border-left: 4px solid var(--amber);">
+          <div class="step-title" style="display: flex; justify-content: space-between; align-items: center;">
+            Admin Authentication
+            <span class="step-role role-student" style="margin-bottom: 0;">Pending</span>
+          </div>
+          <p class="step-desc">Integrate NextAuth with Supabase to secure the /admin panel for production use.</p>
+        </div>
+
+        <!-- Gap 2 -->
+        <div class="step-card" style="border-left: 4px solid var(--amber);">
+          <div class="step-title" style="display: flex; justify-content: space-between; align-items: center;">
+            Photo Storage
+            <span class="step-role role-student" style="margin-bottom: 0;">Pending</span>
+          </div>
+          <p class="step-desc">Migrate from text-based photo URLs to Supabase Storage for direct image uploads.</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /container -->
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-copy">VeriFind Integration Guide — Cardano Preview</div>
+      <div class="footer-network">
+        <div class="footer-dot"></div>
+        Network: Preview
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Syntax highlighting
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+
+      // Scroll-triggered fade-in
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.07 });
+
+      document.querySelectorAll('.fade-up').forEach((el, i) => {
+        el.style.transitionDelay = `${i * 40}ms`;
+        obs.observe(el);
+      });
+    });
+  </script>
+
+</body>
+</html>

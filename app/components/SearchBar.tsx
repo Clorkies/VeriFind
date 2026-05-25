@@ -12,7 +12,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
 
   return (
     <label className="relative block w-full max-w-3xl">
-      <span className="sr-only">Search the Ledger</span>
+      <span className="sr-only">Search the board</span>
 
       <div
         className={`relative flex items-center gap-2 rounded-2xl border bg-[color-mix(in_srgb,var(--color-surface)_86%,transparent)] transition-all duration-300 ${
@@ -43,7 +43,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="Search the Ledger — by name, location, or txid…"
+          placeholder="Search the board — name, location, or description…"
           className="w-full bg-transparent py-3.5 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-soft)] outline-none sm:text-base"
         />
       </div>

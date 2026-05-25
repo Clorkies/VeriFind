@@ -5,11 +5,12 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDown,
   ArrowRight,
+  BadgeCheck,
   Check,
-  QrCode,
-  ScanLine,
+  ClipboardList,
+  FileText,
   Search,
-  Wallet,
+  User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -31,50 +32,50 @@ const STEPS: {
   verified?: boolean;
 }[] = [
   {
-    key: "connect",
+    key: "log",
     label: "Step 1",
-    title: "Connect",
-    body: "Link your Cardano wallet. Your address is your unique campus identity—no passwords needed.",
-    Icon: Wallet,
-    preview: <PreviewConnect />,
+    title: "Log the Item",
+    body: "A finder brings the item to the Lost & Found desk, and staff log it into the registry.",
+    Icon: ClipboardList,
+    preview: <PreviewIntake />,
     iconGlow: GLOW_STEP,
     labelClass: "text-[var(--color-accent)]",
   },
   {
-    key: "report-search",
+    key: "board",
     label: "Step 2",
-    title: "Report or Search",
-    body: "Found an item? Log it on the ledger. Lost something? Browse the ‘Pinterest’ board of reported finds.",
+    title: "Board Listing",
+    body: "Logged items appear on the public board so students can search for their belongings.",
     Icon: Search,
     preview: <PreviewBoard />,
     iconGlow: GLOW_STEP,
     labelClass: "text-[var(--color-accent)]",
   },
   {
-    key: "tag",
+    key: "claim",
     label: "Step 3",
-    title: "Tag Your Items",
-    body: "Download your personal QR sticker from VeriFind. Print it and attach it to laptops, IDs, and valuables—your public address is embedded in the code.",
-    Icon: QrCode,
-    preview: <PreviewQrSticker />,
+    title: "Submit Claim",
+    body: "Students submit a claim with their Student ID, contact info, and a detailed description.",
+    Icon: FileText,
+    preview: <PreviewClaimForm />,
     iconGlow: GLOW_STEP,
     labelClass: "text-[var(--color-accent)]",
   },
   {
-    key: "verify",
+    key: "review",
     label: "Step 4",
-    title: "Scan to Verify",
-    body: "Found a match? Scan the sticker in the app. If the code matches your connected wallet, ownership is confirmed—no signature or vkey required from the finder.",
-    Icon: ScanLine,
-    preview: <PreviewScanVerify />,
+    title: "Staff Review",
+    body: "Staff verify the Student ID and compare the description against the physical item.",
+    Icon: BadgeCheck,
+    preview: <PreviewReview />,
     iconGlow: GLOW_STEP,
     labelClass: "text-[var(--color-accent)]",
   },
   {
-    key: "return",
+    key: "release",
     label: "Step 5",
-    title: "Immutable Return",
-    body: "Once verified, the claim is recorded on-chain. The ledger is updated, and your item is VeriFound.",
+    title: "Pickup & Release",
+    body: "Approved students collect the item in person with their campus ID. The return is recorded on-chain.",
     Icon: Check,
     preview: <PreviewVerified />,
     iconGlow: GLOW_VERIFIED,
@@ -103,11 +104,11 @@ export function HowItWorks() {
             How it works
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-3xl">
-            From wallet to VeriFound in five steps
+            From intake to return in five steps
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-[var(--color-text-soft)] md:text-base">
-            A simple path through the Cardano ledger—built so anyone on campus
-            can follow along, no blockchain degree required.
+            A school-managed flow that keeps verification human, quick, and
+            accessible for every student.
           </p>
         </motion.header>
 
@@ -213,16 +214,16 @@ function StepCard({
   );
 }
 
-function PreviewConnect() {
+function PreviewIntake() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="h-3 w-2/5 rounded-md bg-[var(--color-text-primary)]/80" />
-        <div className="h-2 w-14 rounded-full bg-[var(--color-accent)]/45" />
+        <div className="h-2 w-20 rounded-full bg-[var(--color-accent)]/45" />
       </div>
       <div className="flex items-center gap-3">
         <div className="grid h-10 w-10 place-items-center rounded-full bg-[var(--color-accent-soft)] ring-2 ring-[color-mix(in_srgb,var(--color-accent)_40%,transparent)]">
-          <Wallet className="h-5 w-5 text-[var(--color-accent)]" strokeWidth={1.5} />
+          <ClipboardList className="h-5 w-5 text-[var(--color-accent)]" strokeWidth={1.5} />
         </div>
         <div className="flex-1 space-y-2">
           <div className="h-2 w-full rounded bg-[var(--color-text-soft)]/20" />
@@ -259,39 +260,34 @@ function PreviewBoard() {
   );
 }
 
-function PreviewQrSticker() {
+function PreviewClaimForm() {
   return (
     <div className="space-y-3">
-      <div className="mx-auto grid h-24 w-24 place-items-center rounded-lg border border-white/10 bg-white p-2">
-        <div className="grid grid-cols-3 gap-0.5">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-2 w-2 ${i % 2 === 0 ? "bg-[var(--color-bg)]" : "bg-transparent"}`}
-            />
-          ))}
-        </div>
+      <div className="space-y-2 rounded-lg border border-white/10 bg-[var(--color-panel)]/40 p-3">
+        <div className="h-2 w-1/2 rounded bg-[var(--color-text-soft)]/25" />
+        <div className="h-2 w-full rounded bg-[var(--color-text-soft)]/20" />
+        <div className="h-2 w-4/5 rounded bg-[var(--color-text-soft)]/15" />
       </div>
-      <p className="text-center font-mono text-[9px] text-[var(--color-text-soft)]">
-        verifind:v1:addr…
-      </p>
-      <div className="h-2 w-full rounded-full bg-[var(--color-accent)]/50" />
+      <div className="flex items-center justify-between gap-2">
+        <div className="h-2 w-16 rounded-full bg-[var(--color-accent)]/50" />
+        <FileText className="h-4 w-4 text-[var(--color-accent)]" strokeWidth={1.5} />
+      </div>
     </div>
   );
 }
 
-function PreviewScanVerify() {
+function PreviewReview() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-center gap-3">
-        <ScanLine className="h-8 w-8 text-[var(--color-accent)]" strokeWidth={1.5} />
+        <User className="h-8 w-8 text-[var(--color-accent)]" strokeWidth={1.5} />
         <span className="text-lg text-[var(--color-text-soft)]">→</span>
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500/20 text-emerald-300">
-          <Check className="h-5 w-5" strokeWidth={2.25} />
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-500/20 text-amber-200">
+          <BadgeCheck className="h-5 w-5" strokeWidth={2.25} />
         </div>
       </div>
       <p className="text-center text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-soft)]">
-        Wallet address match
+        Staff verification
       </p>
     </div>
   );
@@ -304,7 +300,7 @@ function PreviewVerified() {
         <div className="h-3 w-1/3 rounded-md bg-[var(--color-text-primary)]/85" />
         <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--color-accent)_22%,transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/30">
           <Check className="h-3 w-3 text-emerald-400" strokeWidth={2.5} />
-          Settled
+          Returned
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2">

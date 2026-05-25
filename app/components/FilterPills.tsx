@@ -1,18 +1,20 @@
 "use client";
 
-import type { ItemCategory } from "@/lib/mockItems";
+export type FilterId =
+  | "open"
+  | "all"
+  | "available"
+  | "under_review"
+  | "returned"
+  | "unclaimed";
 
-export type FilterId = "all" | ItemCategory | "resolved";
-
-const FILTERS: {
-  id: FilterId;
-  label: string;
-}[] = [
+const FILTERS: { id: FilterId; label: string }[] = [
+  { id: "open", label: "Open" },
+  { id: "available", label: "Available" },
+  { id: "under_review", label: "Under Review" },
+  { id: "returned", label: "Returned" },
+  { id: "unclaimed", label: "Unclaimed" },
   { id: "all", label: "All" },
-  { id: "electronics", label: "Electronics" },
-  { id: "books", label: "Books" },
-  { id: "valuables", label: "Valuables" },
-  { id: "resolved", label: "Resolved" },
 ];
 
 type FilterPillsProps = {
