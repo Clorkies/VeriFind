@@ -26,7 +26,7 @@ export function Hero() {
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)] px-3 py-1.5 text-xs font-medium tracking-wide text-[var(--color-text-soft)]">
           <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />
           <span>
-            Live on Cardano · Preprod
+            Live on Cardano · Preview
           </span>
         </div>
 

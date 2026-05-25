@@ -72,7 +72,7 @@ type ItemCardProps = {
   item: FoundItem;
 };
 
-const EXPLORER_TX = "https://preprod.cardanoscan.io/transaction/";
+const EXPLORER_TX = "https://preview.cardanoscan.io/transaction/";
 const MEDIA_ASPECTS = [
   "aspect-[4/3]",
   "aspect-[3/2]",
