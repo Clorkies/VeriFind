@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
   };
 
   const tx = new Transaction({
-    initiator: wallet,
+    initiator: wallet as any,
     fetcher: provider,
     submitter: provider,
     evaluator: provider,
