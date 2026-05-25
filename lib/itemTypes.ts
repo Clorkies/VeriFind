@@ -15,6 +15,7 @@ export interface FoundItem {
   id: string;
   name: string;
   description: string;
+  hiddenDescription?: string; // Private details for admin verification
   category: ItemCategory;
   locationFound: string;
   dateFound: string;
