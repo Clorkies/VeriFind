@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const projectId = process.env.BLOCKFROST_PROJECT_ID;
+  const projectId =
+    process.env.BLOCKFROST_PROJECT_ID || process.env.NEXT_PUBLIC_BLOCKFROST_PROJECT_ID;
   const mnemonic = process.env.CARDANO_ADMIN_MNEMONIC;
   const networkId = resolveNetworkId(process.env.CARDANO_NETWORK);
 
@@ -88,37 +89,73 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const provider = new BlockfrostProvider(projectId);
-  const wallet = await MeshCardanoHeadlessWallet.fromMnemonic({
-    mnemonic: mnemonic.trim().split(/\s+/),
-    networkId,
-    walletAddressType: AddressType.Base,
-    fetcher: provider,
-  });
-  const changeAddress = await wallet.getChangeAddressBech32();
+  try {
+    const provider = new BlockfrostProvider(projectId);
+    const wallet = await MeshCardanoHeadlessWallet.fromMnemonic({
+      mnemonic: mnemonic.trim().split(/\s+/),
+      networkId,
+      walletAddressType: AddressType.Base,
+      fetcher: provider,
+    });
+    const changeAddress = await wallet.getChangeAddressBech32();
+    if (!changeAddress) {
+      return Response.json(
+        {
+          error:
+            "Admin wallet address is unavailable. Check CARDANO_NETWORK and mnemonic configuration.",
+        },
+        { status: 500 },
+      );
+    }
 
-  const metadata = {
-    app: "verifind",
-    event: body.event,
-    itemId: body.itemId,
-    claimId: body.claimId ?? null,
-    adminId: body.adminId,
-    timestamp: new Date().toISOString(),
-  };
+    const utxosRaw = await wallet.getUtxosMesh();
+    const utxos = (utxosRaw || []).filter(Boolean);
+    if (utxos.length === 0) {
+      return Response.json(
+        {
+          error:
+            "Admin wallet has no UTXOs. Fund the wallet before anchoring on-chain.",
+        },
+        { status: 400 },
+      );
+    }
 
-  const tx = new Transaction({
-    initiator: wallet as any,
-    fetcher: provider,
-    submitter: provider,
-    evaluator: provider,
-    verbose: false,
-  })
-    .sendLovelace(changeAddress, "2000000")
-    .setMetadata(METADATA_LABEL, metadata);
+    const metadata: Record<string, string> = {
+      app: "verifind",
+      event: String(body.event),
+      itemId: String(body.itemId),
+      adminId: String(body.adminId),
+      timestamp: new Date().toISOString(),
+    };
+    if (body.claimId) {
+      metadata.claimId = String(body.claimId);
+    }
 
-  const unsignedTx = await tx.build();
-  const signedTx = await wallet.signTxReturnFullTx(unsignedTx);
-  const txHash = await provider.submitTx(signedTx);
+    const tx = new Transaction({
+      initiator: wallet as any,
+      fetcher: provider,
+      submitter: provider,
+      evaluator: provider,
+      verbose: false,
+    })
+      .sendLovelace(changeAddress, "2000000")
+      .setMetadata(METADATA_LABEL, metadata);
+    tx.setChangeAddress(changeAddress);
+    tx.txBuilder.selectUtxosFrom(utxos);
 
-  return Response.json({ txHash });
+    const unsignedTx = await tx.build();
+    const signedTx = await wallet.signTxReturnFullTx(unsignedTx);
+    const txHash = await provider.submitTx(signedTx);
+
+    return Response.json({ txHash });
+  } catch (error: any) {
+    console.error("Anchoring error:", error);
+    return Response.json(
+      {
+        error: error.message || "An unexpected error occurred during anchoring.",
+        details: error.toString(),
+      },
+      { status: 500 },
+    );
+  }
 }
