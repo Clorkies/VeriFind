@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifind: Ledger & Flow Visual Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #18181b;
+      --surface-hover: #27272a;
+      --border: #3f3f46;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.2);
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 { margin: 0; font-weight: 600; }
+    h1 { font-size: 3rem; letter-spacing: -0.02em; }
+    h2 { font-size: 1.875rem; padding-bottom: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.25rem; color: #fff; margin-bottom: 0.75rem; }
+    p { margin-top: 0; margin-bottom: 1rem; color: var(--text-muted); }
+    
+    /* Header */
+    header {
+      padding: 6rem 0 4rem;
+      text-align: center;
+      background: radial-gradient(circle at top, var(--surface) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    header p { max-width: 600px; margin: 1rem auto 0; font-size: 1.125rem; }
+
+    section { padding: 4rem 0; }
+
+    /* Cards */
+    .grid { display: grid; gap: 1.5rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -10px var(--accent-glow);
+    }
+    .card ul { margin: 0; padding-left: 1.5rem; color: var(--text-muted); }
+    .card li { margin-bottom: 0.5rem; }
+
+    /* Flow Visualization */
+    .flow-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: relative;
+      padding-left: 2rem;
+    }
+    .flow-wrapper::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent), var(--success));
+    }
+    .flow-step {
+      display: flex;
+      gap: 1.5rem;
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 16px;
+    }
+    .flow-step:hover { border-color: var(--accent); }
+    .step-marker {
+      position: absolute;
+      left: -2rem;
+      top: 50%;
+      transform: translateY(-50%) translateX(-50%);
+      width: 32px;
+      height: 32px;
+      background: var(--bg);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--accent);
+      z-index: 2;
+    }
+    .step-content { flex: 1; }
+    .step-content h3 { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.1);
+      font-weight: 500;
+    }
+    .badge.admin { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .badge.student { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge.chain { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    /* Code Blocks */
+    .code-section { margin-bottom: 2rem; }
+    .code-window {
+      background: #000;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .code-header {
+      background: var(--surface);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    .mac-dots { display: flex; gap: 6px; margin-right: 1rem; }
+    .mac-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+    
+    pre {
+      margin: 0;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    code { color: #e2e8f0; }
+    
+    /* Syntax Highlighting */
+    .keyword { color: #ff7b72; }
+    .string { color: #a5d6ff; }
+    .function { color: #d2a8ff; }
+    .comment { color: #8b949e; font-style: italic; }
+    .operator { color: #79c0ff; }
+    .variable { color: #c9d1d9; }
+    .property { color: #79c0ff; }
+    
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <h1>Verifind: Architecture & Flow</h1>
+      <p>A visual guide to the system's implementation status, user flow, and technical headless Cardano ledger integration.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- 1. Implementation Status Audit -->
+    <section>
+      <h2>1. Implementation Status Audit</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Core Pillars Established</h3>
+          <ul>
+            <li><strong>Institutional Verification:</strong> Replaced wallet addresses with Student IDs and added a "Staff Secret" field to prevent fraudulent claims.</li>
+            <li><strong>Persistent Backend:</strong> Migrated all data to Supabase (PostgreSQL), replacing the mock JSON files.</li>
+            <li><strong>Real-time Sync:</strong> The board and admin panel update instantly using Supabase's replication features.</li>
+            <li><strong>On-Chain Audit Trail:</strong> Critical events are anchored to the Cardano Preprod network via server-side signing.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Minor Gaps for Future Iterations</h3>
+          <ul>
+            <li><strong>Admin Auth:</strong> The panel at <code>/admin</code> is currently open to anyone; integrating NextAuth with Supabase is the next step for production security.</li>
+            <li><strong>Photo Storage:</strong> Photo URLs are currently text strings; integrating Supabase Storage would allow for direct image uploads.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. User Flow -->
+    <section>
+      <h2>2. Testing Guide & Recommended Flow</h2>
+      <div class="flow-wrapper">
+        
+        <div class="flow-step">
+          <div class="step-marker">1</div>
+          <div class="step-content">
+            <h3>Admin Intake <span class="badge admin">Admin Role</span></h3>
+            <p><strong>Action:</strong> Go to <code>/admin</code> and log a new item (e.g., "Silver Watch").</p>
+            <p><strong>Crucial:</strong> Add a "Secret" that only the owner knows (e.g., "Engraved with 'To John' on the back").</p>
+            <p><strong>Verify:</strong> The item appears on the <code>/board</code> instantly.</p>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-marker">2</div>
+          <div class="step-content">
+            <h3>Student Discovery & Claim <span class="badge student">Student Role</span></h3>
+            <p><strong>Action:</strong> Open <code>/board</code> in a new window. Click "View Details" on the Watch.</p>
+            <p><strong>Action:</strong> Fill out the claim form with a Student ID (e.g. 20-1234) and describe the secret: "It has an engraving on the back that says 'To John'".</p>
+            <p><strong>Verify:</strong> The claim appears in the "My Claims" section for that Student ID.</p>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-marker">3</div>
+          <div class="step-content">
+            <h3>Admin Review & Approval <span class="badge admin">Admin Role</span></h3>
+            <p><strong>Action:</strong> Go back to <code>/admin</code>. In the Claim Queue, compare the student's proof to the hidden secret.</p>
+            <p><strong>Action:</strong> Click Approve.</p>
+            <p><strong>Verify:</strong> The item status on the board changes to "Under Review".</p>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-marker">4</div>
+          <div class="step-content">
+            <h3>Pickup & Final Release <span class="badge chain">Ledger Event</span></h3>
+            <p><strong>Action:</strong> Once the student arrives at the desk, the admin clicks "Release Item".</p>
+            <p><strong>Verify:</strong> The item status changes to "Returned". Click the "On-chain ↗" link on the item card to see the final audit record on the blockchain.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. Technical Implementation -->
+    <section>
+      <h2>3. Cardano & Ledger Technical Overview</h2>
+      <p>The system uses a <strong>Headless Anchoring</strong> model in <code>/api/ledger/anchor/route.ts</code> to provide transparency without requiring students to use blockchain tools. Transactions pay the admin wallet back to itself, managing UTxOs easily while attaching metadata (CIP-674).</p>
+
+      <div class="grid grid-2">
+        
+        <div class="code-section">
+          <h3>1. Transaction Building & Metadata</h3>
+          <p>Every event (Item Logged, Claim Approved, Item Returned) is attached as a JSON payload to the transaction metadata (Label 674).</p>
+          <div class="code-window">
+            <div class="code-header">
+              <div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div>
+              app/api/ledger/anchor/route.ts
+            </div>
+<pre><code><span class="keyword">const</span> <span class="variable">metadata</span> <span class="operator">=</span> {
+  <span class="property">app</span>: <span class="string">"verifind"</span>,
+  <span class="property">event</span>: <span class="variable">body</span>.<span class="property">event</span>,
+  <span class="property">itemId</span>: <span class="variable">body</span>.<span class="property">itemId</span>,
+  <span class="property">claimId</span>: <span class="variable">body</span>.<span class="property">claimId</span> <span class="operator">??</span> <span class="keyword">null</span>,
+  <span class="property">adminId</span>: <span class="variable">body</span>.<span class="property">adminId</span>,
+  <span class="property">timestamp</span>: <span class="keyword">new</span> <span class="function">Date</span>().<span class="function">toISOString</span>(),
+};
+
+<span class="keyword">const</span> <span class="variable">tx</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Transaction</span>({
+  <span class="property">initiator</span>: <span class="variable">wallet</span> <span class="keyword">as</span> <span class="keyword">any</span>,
+  <span class="property">fetcher</span>: <span class="variable">provider</span>,
+  <span class="property">submitter</span>: <span class="variable">provider</span>,
+  <span class="property">evaluator</span>: <span class="variable">provider</span>,
+  <span class="property">verbose</span>: <span class="keyword">false</span>,
+})
+  .<span class="function">sendLovelace</span>(<span class="variable">changeAddress</span>, <span class="string">"2000000"</span>)
+  .<span class="function">setMetadata</span>(<span class="variable">METADATA_LABEL</span>, <span class="variable">metadata</span>);
+
+<span class="keyword">const</span> <span class="variable">unsignedTx</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="variable">tx</span>.<span class="function">build</span>();</code></pre>
+          </div>
+        </div>
+
+        <div>
+          <div class="code-section">
+            <h3>2. Signing the Transaction</h3>
+            <p>The transaction is signed server-side by the <code>MeshCardanoHeadlessWallet</code> using the environment's <code>CARDANO_ADMIN_MNEMONIC</code>.</p>
+            <div class="code-window">
+              <div class="code-header">
+                <div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div>
+                app/api/ledger/anchor/route.ts
+              </div>
+<pre><code><span class="comment">// Wallet instantiated from mnemonic previously</span>
+<span class="keyword">const</span> <span class="variable">signedTx</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="variable">wallet</span>.<span class="function">signTxReturnFullTx</span>(<span class="variable">unsignedTx</span>);</code></pre>
+            </div>
+          </div>
+
+          <div class="code-section">
+            <h3>3. Submitting to the Network</h3>
+            <p>The signed transaction is submitted to the Cardano network (via Blockfrost provider).</p>
+            <div class="code-window">
+              <div class="code-header">
+                <div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div>
+                app/api/ledger/anchor/route.ts
+              </div>
+<pre><code><span class="keyword">const</span> <span class="variable">txHash</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="variable">provider</span>.<span class="function">submitTx</span>(<span class="variable">signedTx</span>);
+<span class="keyword">return</span> <span class="property">Response</span>.<span class="function">json</span>({ <span class="property">txHash</span> });</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="code-section" style="max-width: 100%;">
+        <h3>4. Transparency & Status Audit</h3>
+        <p>The resulting <code>txHash</code> is saved to Supabase and exposed via the UI. Users can click the anchor link on an Item Card to verify the on-chain metadata via Cardanoscan.</p>
+        <div class="code-window">
+          <div class="code-header">
+            <div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div>
+            app/components/ItemCard.tsx
+          </div>
+<pre><code><span class="keyword">const</span> <span class="variable">short</span> <span class="operator">=</span> <span class="function">truncateTxId</span>(<span class="variable">item</span>.<span class="property">txHash</span>);
+<span class="keyword">const</span> <span class="variable">explorerUrl</span> <span class="operator">=</span> <span class="variable">item</span>.<span class="property">txHash</span> 
+  <span class="operator">?</span> <span class="string">`https://preprod.cardanoscan.io/transaction/</span><span class="keyword">${</span><span class="variable">item</span>.<span class="property">txHash</span><span class="keyword">}</span><span class="string">`</span> 
+  : <span class="keyword">null</span>;
+
+<span class="comment">// Used in the UI:</span>
+&lt;<span class="function">div</span> <span class="property">className</span>=<span class="string">"flex items-center gap-1.5"</span>&gt;
+  &lt;<span class="function">MetadataIcon</span> <span class="property">className</span>=<span class="string">"h-4 w-4 text-[var(--color-accent)]"</span> /&gt;
+  &lt;<span class="function">a</span> <span class="property">href</span>={<span class="variable">explorerUrl</span>} <span class="property">target</span>=<span class="string">"_blank"</span> <span class="property">rel</span>=<span class="string">"noreferrer"</span>&gt;
+    {<span class="variable">short</span>} &lt;<span class="function">span</span>&gt;↗&lt;/<span class="function">span</span>&gt;
+  &lt;/<span class="function">a</span>&gt;
+&lt;/<span class="function">div</span>&gt;</code></pre>
+        </div>
+      </div>
+      
+    </section>
+  </main>
+  
+  <footer style="text-align: center; padding: 2rem 0; border-top: 1px solid var(--border); margin-top: 2rem;">
+    <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">Verifind &copy; 2026 - System Implementation Guide</p>
+  </footer>
+
+</body>
+</html>
