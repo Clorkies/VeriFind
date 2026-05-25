@@ -11,6 +11,7 @@ const STATUS_STYLES = {
   approved: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
   rejected: "border-rose-400/40 bg-rose-400/10 text-rose-300",
 } as const;
+const EXPLORER_TX = "https://preview.cardanoscan.io/transaction/";
 
 function MyClaimsContent() {
   const { claims, items } = useItems();
@@ -122,6 +123,16 @@ function MyClaimsContent() {
                       </span>{" "}
                       {claim.reviewNotes}
                     </p>
+                  ) : null}
+                  {item?.txHash ? (
+                    <a
+                      href={`${EXPLORER_TX}${item.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                    >
+                      View on-chain ↗
+                    </a>
                   ) : null}
                 </div>
               </div>

@@ -128,8 +128,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const initiator = {
+        getChangeAddress: async () => changeAddress,
+        getCollateral: async () => {
+          const collateral = await wallet.getCollateralMesh?.();
+          return (collateral || []).filter(Boolean);
+        },
+        getUtxos: async () => utxos,
+      };
+
       const tx = new Transaction({
-        initiator: wallet as any,
+        initiator,
         fetcher: provider,
         submitter: provider,
         evaluator: provider,
@@ -138,7 +147,6 @@ export async function POST(request: NextRequest) {
         .sendLovelace(changeAddress, "2000000")
         .setMetadata(METADATA_LABEL, metadata);
       tx.setChangeAddress(changeAddress);
-      tx.txBuilder.selectUtxosFrom(utxos);
 
       const unsignedTx = await tx.build();
       const signedTx = await wallet.signTxReturnFullTx(unsignedTx);
@@ -150,7 +158,11 @@ export async function POST(request: NextRequest) {
       txHash = await buildAndSubmit();
     } catch (submitError: any) {
       const message = submitError?.message ?? submitError?.toString?.() ?? "";
-      if (message.includes("All inputs are spent")) {
+      if (
+        message.includes("All inputs are spent") ||
+        message.includes("BadInputsUTxO") ||
+        message.includes("ValueNotConservedUTxO")
+      ) {
         txHash = await buildAndSubmit();
       } else {
         throw submitError;

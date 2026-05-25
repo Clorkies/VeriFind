@@ -362,6 +362,15 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         notes,
       });
 
+      const { error: itemStatusError } = await supabase
+        .from("items")
+        .update({ status: "under_review" })
+        .eq("id", claim.item_id);
+
+      if (itemStatusError) {
+        throw new Error(`Failed to update item status: ${itemStatusError.message}`);
+      }
+
       setClaims((prev) =>
         prev.map((entry) =>
           entry.claimId === claimId
@@ -389,10 +398,20 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         claimId,
         adminId,
       });
-      await supabase
+      const { error: txUpdateError } = await supabase
         .from("items")
         .update({ tx_hash: txHash })
         .eq("id", claim.item_id);
+
+      if (txUpdateError) {
+        throw new Error(`Failed to store tx hash: ${txUpdateError.message}`);
+      }
+
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === claim.item_id ? { ...item, txHash } : item,
+        ),
+      );
     } finally {
       release();
     }
@@ -425,7 +444,9 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         })
         .eq("id", claimId);
 
-      if (updateError) throw new Error(`Failed to reject claim: ${updateError.message}`);
+      if (updateError) {
+        throw new Error(`Failed to reject claim: ${updateError.message}`);
+      }
 
       // Check if there are other active claims
       const { data: otherClaims } = await supabase
@@ -513,7 +534,18 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         itemId,
         adminId,
       });
-      await supabase.from("items").update({ tx_hash: txHash }).eq("id", itemId);
+      const { error: txUpdateError } = await supabase
+        .from("items")
+        .update({ tx_hash: txHash })
+        .eq("id", itemId);
+
+      if (txUpdateError) {
+        throw new Error(`Failed to store tx hash: ${txUpdateError.message}`);
+      }
+
+      setItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, txHash } : item)),
+      );
     } finally {
       release();
     }

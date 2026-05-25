@@ -6,6 +6,7 @@ import { ItemCard } from "./ItemCard";
 import { useItems } from "@/app/context/ItemsProvider";
 
 const ADMIN_ID = "admin-001";
+const EXPLORER_TX = "https://preview.cardanoscan.io/transaction/";
 
 export function AdminItemForm() {
   const { items, claims, loading, logItem, approveClaim, rejectClaim, releaseItem } =
@@ -22,6 +23,7 @@ export function AdminItemForm() {
   const [message, setMessage] = useState<{
     type: "success" | "warning" | "error";
     text: string;
+    txHash?: string;
   } | null>(null);
   const [actionMessage, setActionMessage] = useState<{
     type: "success" | "warning" | "error";
@@ -96,6 +98,7 @@ export function AdminItemForm() {
         setMessage({
           type: "success",
           text: `Logged "${name}" with on-chain record ${result.txHash}.`,
+          txHash: result.txHash,
         });
       } else {
         setMessage({
@@ -353,7 +356,17 @@ export function AdminItemForm() {
                       : "bg-red-500/10 text-red-400 border border-red-500/20"
                 }`}
               >
-                {message.text}
+                <p>{message.text}</p>
+                {message.txHash ? (
+                  <a
+                    href={`${EXPLORER_TX}${message.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                  >
+                    View on-chain ↗
+                  </a>
+                ) : null}
               </div>
             ) : null}
 
@@ -490,6 +503,17 @@ export function AdminItemForm() {
                           </span>{" "}
                           {claim.proofDescription}
                         </p>
+
+                        {itemForCard.txHash ? (
+                          <a
+                            href={`${EXPLORER_TX}${itemForCard.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-text-soft)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                          >
+                            View on-chain ↗
+                          </a>
+                        ) : null}
 
                         {claim.status === "pending" ? (
                           <div className="mt-4 space-y-2">
