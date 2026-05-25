@@ -64,7 +64,7 @@ const STEPS: {
   {
     key: "review",
     label: "Step 4",
-    title: "Admin Review",
+    title: "Staff Review",
     body: "Staff verify the Student ID and compare the description against the physical item.",
     Icon: BadgeCheck,
     preview: <PreviewReview />,

@@ -197,7 +197,7 @@ Remove all wallet/QR step descriptions. Replace with the school-managed flow:
 2. Admin logs it with photo and description.
 3. Item appears on the public board.
 4. Student finds their item and submits a Claim Request with their Student ID.
-5. Admin reviews the claim and verifies identity + description.
+5. Staff Reviews the claim and verifies identity + description.
 6. Student collects item in person with campus ID.
 
 ### 5.7 Navigation
